@@ -1,40 +1,52 @@
-const BotFather = require('botfather')
+const BotFather = require('botfather');
 
-const TOKEN = "***************************************";
+const PersistedStatus = require('./PersistedStatus.js');
+
+const status = PersistedStatus.get();
 
 class Bot {
-	constructor() {
-		this._bf = new BotFather(TOKEN);
-		this._chats = {};
+	constructor(token) {
+		this._bf = new BotFather(token);
+		this._chats = status.get('chats', {});
+		this._lastUpdateId = status.get('lastUpdateId');
 	}
 
 	async connect() {
-		const updates = await this._call('getUpdates');
+		const params = {};
+
+		if (this._lastUpdateId) {
+			params.offset = this._lastUpdateId + 1;
+		}
+
+		const updates = await this._call('getUpdates', params);
 
 		for (const update of updates) {
 			if (update.message) {
-				this._chats[update.message.chat.id] = update.message.chat;
+				this._chats[update.message.chat.username] = update.message.chat;
 			}
+
+			this._lastUpdateId = Math.max(this._lastUpdateId, update.update_id);
 		}
+
+		status.set('chats', this._chats);
+		status.set('lastUpdateId', this._lastUpdateId);
 	}
 
 	async send(text) {
 		for (const chat of Object.values(this._chats)) {
 			return this._call('sendMessage', {
 				chat_id: chat.id,
-				text
+				text,
 			});
 		}
-
 	}
 
 	async _call(method, params) {
 		const json = await this._bf.api(method, params);
 
 		if (json.ok) {
-			return json.result
-		}
-		else {
+			return json.result;
+		} else {
 			throw new Error(json.description);
 		}
 	}

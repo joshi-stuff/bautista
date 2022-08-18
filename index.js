@@ -1,59 +1,58 @@
 const Bot = require('./Bot.js');
+const Config = require('./Config.js');
 const Device = require('./Device.js');
-const getCheapestPrices = require('./getCheapestPrices.js');
-const getPrices = require('./getPrices.js');
-
-const CONTROL_PERIOD = 58000;
-const MEROSS = {
-  user: "******************",
-  password: "******************",
-};
-
-const DEVICES = [
-	new Device('Pruebas', 3),
-/*
-	{
-		hours: 3,
-		name: 'Calentador'
-	},
-*/
-];
+const Price = require('./Price.js');
 
 async function main() {
+	const config = Config.read();
+
+	const devices = config.devices;
+
+	const bot = new Bot(config.telegram.token);
+
+	try {
+		await bot.connect();
+
+		say(bot, 'Hola! Ya estoy de vuelta 👋');
+
+		await Device.connectDevices(config.meross, devices, (...args) =>
+			deviceEventHandler(bot, ...args)
+		);
+	} catch (err) {
+		say(bot, 'Uf! Algo ha ido mal... 🤕');
+		say(bot, err);
+
+		process.exit(1);
+	}
+
 	let lastControlHour;
-
-	const bot = new Bot();
-
-	await bot.connect();
-
-	console.log('🤖 Bautista bot connected');
-
-	bot.send('Hi there! I\'m online again 👋');
-
-	await Device.connectDevices(MEROSS, DEVICES);
+	const schedules = {};
 
 	while (true) {
-		if (await fillDevicePrices(DEVICES)) {
-			console.log('💲 Prices updated');
+		if (await updateSchedules(schedules, devices)) {
+			say(
+				bot,
+				`Acabo de actualizar los precios de la luz 🎉
 
-			bot.send('I\'ve just updated the prices');
+Las horas mas baratas para cada dispositivo son:
 
-			for (const dev of DEVICES) {
-				const hours = dev.prices.map(price => price.hour).join(', ');
+${formatSchedules(schedules, devices)}
+`
+			);
 
-				console.log(`    Device ${dev.name} on hours: ${hours}`);
-			}
+			lastControlHour = await controlDevices(
+				devices,
+				schedules,
+				lastControlHour,
+				bot
+			);
+
+			await sleep(config.control.period);
 		}
-		
-		lastControlHour = await controlDevices(DEVICES, lastControlHour, bot);
-
-		await sleep(CONTROL_PERIOD);
 	}
 }
 
-async function controlDevices(devices, lastControlHour, bot) {
-	console.log('🧠 Controlling devices...');
-
+async function controlDevices(devices, schedules, lastControlHour, bot) {
 	const now = new Date();
 	const hour = now.getHours();
 
@@ -62,33 +61,112 @@ async function controlDevices(devices, lastControlHour, bot) {
 	}
 
 	for (const dev of devices) {
-		const price = dev.prices.find(price => price.hour == hour);
-
-		if (price) {
-			dev.toggle(true);
-			console.log(`    💡 Device turned on: ${dev.name}`);
+		if (!dev.controlled) {
+			continue;
 		}
-		else {
+
+		const shouldBeOn = schedules[dev.name].onAt[hour];
+
+		await dev.update_status();
+
+		if (shouldBeOn && !dev.status.on) {
+			dev.toggle(true);
+			say(bot, `Acabo de encender 💡 el dispositivo ${dev.name}`);
+		} else if (!shouldBeOn && dev.status.on) {
 			dev.toggle(false);
-			console.log(`    🔌 Device turned off: ${dev.name}`);
+			say(bot, `Acabo de apagar 🔌 el dispositivo ${dev.name}`);
 		}
 	}
+}
+
+function deviceEventHandler(bot, event, dev, error) {
+	if (dev) {
+		switch (event) {
+			case 'connected': {
+				say(bot, `Se ha conectado el dispositivo ${dev.name}`);
+
+				break;
+			}
+
+			case 'disconnected': {
+				if (error) {
+					say(
+						bot,
+						`
+Se ha desconectado el dispositivo ${dev.name}.
+Ocurrió un error: ${error}`
+					);
+				} else {
+					say(bot, `Se ha desconectado el dispositivo ${dev.name}`);
+				}
+
+				break;
+			}
+
+			case 'errored': {
+				say(
+					bot,
+					`Ocurrió un error en el dispositivo ${dev.name}: ${error}`
+				);
+
+				break;
+			}
+		}
+	} else {
+		switch (event) {
+			case 'errored': {
+				say(bot, `Ocurrió un error de conexión: ${error}`);
+
+				break;
+			}
+		}
+	}
+}
+
+function formatSchedules(schedules, devices) {
+	let msg = '';
+
+	devices.forEach((dev) => {
+		const schedule = schedules[dev.name];
+
+		msg += `    · ${dev.name}:`;
+
+		for (let hour = 0; hour < 24; hour++) {
+			if (schedule.onAt[hour]) {
+				msg += ` ${hour}:00`;
+			}
+		}
+
+		msg += '\n';
+	});
+
+	return msg;
+}
+
+function say(bot, ...things) {
+	console.log(...things);
+	console.log('---');
+
+	bot.send(things.join(' '));
 }
 
 async function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+	return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-// TODO: move to Device.updatePrices()
-async function fillDevicePrices(devices) {
-	if (getPrices.isCached() && devices[0].prices) {
+async function updateSchedules(schedules, devices) {
+	if (Price.isTodayCached() && schedules.length) {
 		return false;
 	}
 
-	const prices = await getPrices();
+	for (const key of Object.keys(schedules)) {
+		delete schedules[key];
+	}
+
+	const prices = await Price.getTodayPrices();
 
 	for (const dev of devices) {
-		dev.prices = getCheapestPrices(prices, dev.hours);	
+		schedules[dev.name] = dev.rules.getSchedule(prices);
 	}
 
 	return true;
