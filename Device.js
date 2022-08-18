@@ -72,39 +72,38 @@ Device.connectDevices = async function connectDevices(
 		const { devName } = deviceDef;
 
 		device.on('connected', () => {
-			withDevice(devices, devName, (dev) => {
+			withDevice(devices, devName, async (dev) => {
 				dev._id = deviceId;
 				dev._def = deviceDef;
 				dev._proxy = device;
 
 				dev.status.connected = true;
 
-				eventHandler('connected', dev);
+				await eventHandler('connected', dev);
 			});
 		});
 
 		device.on('close', (error) => {
-			withDevice(devices, devName, (dev) => {
+			withDevice(devices, devName, async (dev) => {
 				dev.status.connected = false;
 
-				eventHandler('disconnected', dev, error);
+				await eventHandler('disconnected', dev, error);
 			});
 		});
 
 		device.on('error', (error) => {
-			withDevice(devices, devName, (dev) => {
+			withDevice(devices, devName, async (dev) => {
 				if (error) {
-					console.log('>>>errored', dev.name, error);
-					eventHandler('errored', dev, error);
+					await eventHandler('errored', dev, error);
 				}
 			});
 		});
 
 		device.on('reconnect', () => {
-			withDevice(devices, devName, (dev) => {
+			withDevice(devices, devName, async (dev) => {
 				dev.status.connected = true;
 
-				eventHandler('connected', dev);
+				await eventHandler('connected', dev);
 			});
 		});
 
@@ -119,9 +118,9 @@ Device.connectDevices = async function connectDevices(
 		});
 	});
 
-	meross.connect((error) => {
+	meross.connect(async (error) => {
 		if (error) {
-			eventHandler('errored', null, error);
+			await eventHandler('errored', null, error);
 		}
 	});
 
