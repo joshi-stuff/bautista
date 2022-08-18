@@ -8,7 +8,7 @@ async function main() {
 
 	const devices = config.devices;
 
-	const bot = new Bot(config.telegram.token);
+	const bot = new Bot(config.telegram.token, config.telegram.allowedUsers);
 
 	try {
 		await bot.connect();
@@ -39,16 +39,16 @@ Las horas mas baratas para cada dispositivo son:
 ${formatSchedules(schedules, devices)}
 `
 			);
-
-			lastControlHour = await controlDevices(
-				devices,
-				schedules,
-				lastControlHour,
-				bot
-			);
-
-			await sleep(config.control.period);
 		}
+
+		lastControlHour = await controlDevices(
+			devices,
+			schedules,
+			lastControlHour,
+			bot
+		);
+
+		await sleep(config.control.period);
 	}
 }
 
@@ -71,10 +71,10 @@ async function controlDevices(devices, schedules, lastControlHour, bot) {
 
 		if (shouldBeOn && !dev.status.on) {
 			dev.toggle(true);
-			say(bot, `Acabo de encender 💡 el dispositivo ${dev.name}`);
+			say(bot, `Acabo de encender el dispositivo ${dev.name} 💡`);
 		} else if (!shouldBeOn && dev.status.on) {
 			dev.toggle(false);
-			say(bot, `Acabo de apagar 🔌 el dispositivo ${dev.name}`);
+			say(bot, `Acabo de apagar el dispositivo ${dev.name} 🔌`);
 		}
 	}
 }
@@ -83,7 +83,7 @@ function deviceEventHandler(bot, event, dev, error) {
 	if (dev) {
 		switch (event) {
 			case 'connected': {
-				say(bot, `Se ha conectado el dispositivo ${dev.name}`);
+				say(bot, `Se ha conectado el dispositivo ${dev.name} 📡`);
 
 				break;
 			}
@@ -97,7 +97,10 @@ Se ha desconectado el dispositivo ${dev.name}.
 Ocurrió un error: ${error}`
 					);
 				} else {
-					say(bot, `Se ha desconectado el dispositivo ${dev.name}`);
+					say(
+						bot,
+						`Se ha desconectado el dispositivo ${dev.name} 👻`
+					);
 				}
 
 				break;
@@ -106,7 +109,7 @@ Ocurrió un error: ${error}`
 			case 'errored': {
 				say(
 					bot,
-					`Ocurrió un error en el dispositivo ${dev.name}: ${error}`
+					`Ocurrió un error en el dispositivo ${dev.name} ❌:\n${error}`
 				);
 
 				break;
@@ -115,7 +118,7 @@ Ocurrió un error: ${error}`
 	} else {
 		switch (event) {
 			case 'errored': {
-				say(bot, `Ocurrió un error de conexión: ${error}`);
+				say(bot, `Ocurrió un error de conexión ❌: ${error}`);
 
 				break;
 			}
@@ -155,7 +158,7 @@ async function sleep(ms) {
 }
 
 async function updateSchedules(schedules, devices) {
-	if (Price.isTodayCached() && schedules.length) {
+	if (Price.isTodayCached() && Object.keys(schedules).length) {
 		return false;
 	}
 

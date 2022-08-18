@@ -25,6 +25,7 @@ class Config {
 		};
 
 		this.telegram = {
+			allowedUsers: json.telegram.allowedUsers,
 			token: json.telegram.token,
 		};
 	}
@@ -46,6 +47,7 @@ Config.read = function () {
 
 	json.telegram = json.telegram || {};
 	json.telegram.token = json.telegram.token || '***';
+	json.telegram.allowedUsers = json.telegram.allowedUsers || [];
 
 	return new Config(json);
 };
