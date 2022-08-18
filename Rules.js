@@ -24,14 +24,27 @@ class Rules {
 module.exports = Rules;
 
 function getCheapestConsecutivePrices(prices, count) {
-	// TODO: implement
 	prices = [...prices];
 
-	prices.sort((l, r) => Number(l.price) - Number(r.price));
+	prices.sort((l, r) => Number(l.hour) - Number(r.hour));
 
-	prices = prices.slice(0, count);
+	let min = 0;
+	let minSum = Number.MAX_VALUE;
 
-	return prices.sort((l, r) => Number(l.hour) - Number(r.hour));
+	for (let i = 0; i < 24 - count + 1; i++) {
+		let sum = 0;
+
+		for (let j = 0; j < count; j++) {
+			sum += prices[i + j].price;
+		}
+
+		if (sum < minSum) {
+			min = i;
+			minSum = sum;
+		}
+	}
+
+	return prices.slice(min, min + count);
 }
 
 function getCheapestPrices(prices, count) {
