@@ -83,16 +83,29 @@ async function controlDevices(devices, schedules, lastControlHour, bot) {
 			continue;
 		}
 
-		const shouldBeOn = schedules[dev.name].onAt[hour];
+		try {
+			const shouldBeOn = schedules[dev.name].onAt[hour];
 
-		await dev.update_status();
+			await dev.update_status();
 
-		if (shouldBeOn && !dev.status.on) {
-			dev.toggle(true);
-			await say(bot, `Acabo de encender el dispositivo ${dev.name} 💡`);
-		} else if (!shouldBeOn && dev.status.on) {
-			dev.toggle(false);
-			await say(bot, `Acabo de apagar el dispositivo ${dev.name} 🔌`);
+			if (shouldBeOn && !dev.status.on) {
+				dev.toggle(true);
+				await say(
+					bot,
+					`Acabo de encender el dispositivo ${dev.name} 💡`
+				);
+			} else if (!shouldBeOn && dev.status.on) {
+				dev.toggle(false);
+				await say(bot, `Acabo de apagar el dispositivo ${dev.name} 🔌`);
+			}
+		} catch (error) {
+			await say(
+				bot,
+				`
+No he podido controlar el dispositivo ${dev.name}.
+
+Ocurrió un error: ${error}`
+			);
 		}
 	}
 }
@@ -112,6 +125,7 @@ async function deviceEventHandler(bot, event, dev, error) {
 						bot,
 						`
 Se ha desconectado el dispositivo ${dev.name}.
+
 Ocurrió un error: ${error}`
 					);
 				} else {
