@@ -3,7 +3,7 @@ const fs = require('fs');
 const Device = require('./Device.js');
 const Rules = require('./Rules.js');
 
-const CONFIG_FILE = '/etc/bautista.json';
+const CONFIG_FILE = '/etc/bautista/config.json';
 
 class Config {
 	constructor(json) {
