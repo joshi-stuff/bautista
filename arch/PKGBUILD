@@ -4,7 +4,7 @@ pkgdesc="A domotic butler bot"
 pkgver=0.0.2
 pkgrel=1
 arch=('any')
-url="https://github.com/joshi-stuff/bautista"
+url='https://github.com/joshi-stuff/bautista'
 license=('GPL3')
 depends=(
 	'nodejs'
@@ -14,28 +14,29 @@ makedepends=(
 	'npm'
 	'shadow'
 )
-install="install.sh"
+install='install.sh'
 
 prepare() {
+	cd $srcdir
 }
 
 build() {
-	cd "$startdir/.."
+	cd $startdir/..
 
 	make clean
 	make build
 }
 
 package() {
-	cd "$pkgdir"
+	cd $pkgdir
 
-	cp -rv "$startdir/root/*" "."
+	cp -rv $startdir/root/* .
 
-	mkdir "./usr/lib/bautista"
-	cp -rv "$startdir/node/bautista/*.js" "./usr/lib/bautista"
-	cp -rv "$startdir/node/bautista/node_modules" "./usr/lib/bautista"
+	mkdir -p ./usr/lib/bautista
+	cp -rv $startdir/../node/bautista/*.js ./usr/lib/bautista
+	cp -rv $startdir/../node/node_modules ./usr/lib/bautista
 
-	mkdir -p "./var/cache/bautista"
+	mkdir -p ./var/cache/bautista
 
-	mkdir -p "./var/run/bautista"
+	mkdir -p ./var/run/bautista
 }

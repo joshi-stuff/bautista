@@ -1,1 +1,3 @@
+/arch/*.zst
+/arch/pkg
 /node/node_modules

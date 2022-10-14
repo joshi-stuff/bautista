@@ -30,7 +30,7 @@ release:
 # Install targets
 #
 aur:
-	cd arch && rm *zst && makepkg -risc
+	cd arch && rm -f *zst && makepkg -risc
 
 install: 
 	mkdir -p "/usr/bin"
