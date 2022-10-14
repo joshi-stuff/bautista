@@ -1,24 +1,24 @@
 # Shorthand variables
 CP = cp -a --no-preserve=ownership 
-YARN_LOCK = node/bautista/yarn.lock
+NODE_MODULES = node/node_modules
 
 #
 # Project targets
 #
-build: $(YARN_LOCK)
-	cd node && yarn build
+build: $(NODE_MODULES)
+	cd node && yarn workspaces run build
 
-clean: $(YARN_LOCK)
-	cd node && yarn clean
+clean: $(NODE_MODULES)
+	cd node && yarn workspaces run clean
 
-format: $(YARN_LOCK) 
-	cd node && yarn format
+format: $(NODE_MODULES) 
+	cd node && yarn workspaces run format
 
-lint: $(YARN_LOCK)
-	cd node && yarn lint
+lint: $(NODE_MODULES)
+	cd node && yarn workspaces run lint
 
-test: $(YARN_LOCK)
-	cd node && yarn test
+test: $(NODE_MODULES)
+	cd node && yarn workspaces run test
 
 #
 # Release target
@@ -93,5 +93,5 @@ uninstall:
 #
 # Internal targets
 #
-node/yarn.lock:
-	cd node && yarn
+$(NODE_MODULES):
+	cd node/bautista && yarn
