@@ -2,7 +2,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 
-const FILE_PATH = "/var/run/bautista/status.json";
+const FILE_PATH = "/run/bautista/status.json";
 
 let persistedStatus;
 
