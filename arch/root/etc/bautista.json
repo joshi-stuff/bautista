@@ -1,0 +1,24 @@
+{
+	"control": {
+		"period": 58000
+	},
+	"devices": {
+		"Pruebas": {
+			"controlled": true,
+			"rules": {
+				"hoursOn": 3,
+				"consecutive": true
+			}
+		}
+	},
+	"meross": {
+		"user": "***",
+		"password": "***"
+	},
+	"telegram": {
+		"token": "***",
+		"allowedUsers": [
+			"***"
+		]
+	}
+}

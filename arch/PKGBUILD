@@ -1,0 +1,41 @@
+# Maintainer: Iván Zaera Avellón <ivan dot zaera at protonmail dot com>
+pkgname=bautista
+pkgdesc="A domotic butler bot"
+pkgver=0.0.2
+pkgrel=1
+arch=('any')
+url="https://github.com/joshi-stuff/bautista"
+license=('GPL3')
+depends=(
+	'nodejs'
+)
+makedepends=(
+	'coreutils'
+	'npm'
+	'shadow'
+)
+install="install.sh"
+
+prepare() {
+}
+
+build() {
+	cd "$startdir/.."
+
+	make clean
+	make build
+}
+
+package() {
+	cd "$pkgdir"
+
+	cp -rv "$startdir/root/*" "."
+
+	mkdir "./usr/lib/bautista"
+	cp -rv "$startdir/node/bautista/*.js" "./usr/lib/bautista"
+	cp -rv "$startdir/node/bautista/node_modules" "./usr/lib/bautista"
+
+	mkdir -p "./var/cache/bautista"
+
+	mkdir -p "./var/run/bautista"
+}
