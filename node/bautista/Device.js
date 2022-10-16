@@ -118,6 +118,28 @@ Device.connectDevices = async function connectDevices(
 		});
 	});
 
+	meross.on('connected', (deviceId) => {
+		console.log(deviceId + ' connected');
+	});
+
+	meross.on('close', (deviceId, error) => {
+		console.log(deviceId + ' closed: ' + error);
+	});
+
+	meross.on('error', async (deviceId, error) => {
+		if (!deviceId && error) {
+			await eventHandler('errored', null, error);
+		}
+	});
+
+	meross.on('reconnect', (deviceId) => {
+		console.log(deviceId + ' reconnected');
+	});
+
+	meross.on('data', (deviceId, payload) => {
+		console.log(deviceId + ' data: ' + JSON.stringify(payload));
+	});
+
 	meross.connect(async (error) => {
 		if (error) {
 			await eventHandler('errored', null, error);
