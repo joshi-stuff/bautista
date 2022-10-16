@@ -4,6 +4,7 @@ const Device = require('./Device.js');
 const Rules = require('./Rules.js');
 
 const CONFIG_FILE = '/etc/bautista/config.json';
+const CREDS_FILE = '/etc/bautista/creds.json';
 
 class Config {
 	constructor(json) {
@@ -42,12 +43,18 @@ Config.read = function () {
 	json.devices = json.devices || {};
 
 	json.meross = json.meross || {};
-	json.meross.user = json.meross.user || '***';
-	json.meross.password = json.meross.password || '***';
 
 	json.telegram = json.telegram || {};
-	json.telegram.token = json.telegram.token || '***';
 	json.telegram.allowedUsers = json.telegram.allowedUsers || [];
+
+	const creds = fs.existsSync(CREDS_FILE)
+		? JSON.parse(fs.readFileSync(CREDS_FILE, 'utf-8'))
+		: {};
+
+	json.meross.user = creds.meross.user || '***';
+	json.meross.password = creds.meross.password || '***';
+
+	json.telegram.token = creds.telegram.token || '***';
 
 	return new Config(json);
 };
