@@ -29,8 +29,8 @@ then
 fi
 
 echo ==== Patching PKGBUILD before makepkg...
-sed -i "s/^pkgver=.*/pkgver=$VERSION/" PKGBUILD
-git add PKGBUILD
+sed -i "s/^pkgver=.*/pkgver=$VERSION/" arch/PKGBUILD
+git add arch/PKGBUILD
 git commit -m "chore: prepare version $VERSION"
 git push
 
@@ -49,7 +49,3 @@ git push
 
 echo ==== Back to master...
 git co master
-
-echo ==== Installing to local system...
-rm *zst
-makepkg -is --noconfirm
