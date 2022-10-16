@@ -39,13 +39,3 @@ git tag "$VERSION"
 
 echo ==== Pushing tags...
 git push --tags
-
-echo ==== Rebasing stable on top of master...
-git co stable
-git rebase master
-
-echo ==== Pushing stable...
-git push
-
-echo ==== Back to master...
-git co master
