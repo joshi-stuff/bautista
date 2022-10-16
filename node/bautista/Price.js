@@ -3,7 +3,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 
-const CACHE_DIR = "/var/cache/bautista";
+const CACHE_DIR = '/var/cache/bautista';
 
 class Price {
 	constructor(datum) {
