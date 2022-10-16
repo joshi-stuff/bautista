@@ -50,17 +50,17 @@ class Bot {
 				continue;
 			}
 
-			const username = message.from.username;
+			const userid = message.from.id;
 
 			if (!this._allowedUsers.includes(username)) {
 				continue;
 			}
 
-			if (!digest[username]) {
-				digest[username] = [];
+			if (!digest[userid]) {
+				digest[userid] = [];
 			}
 
-			digest[username].push(message.text);
+			digest[userid].push(message.text);
 		}
 
 		status.set('lastUpdateId', this._lastUpdateId);
@@ -68,16 +68,16 @@ class Bot {
 		return digest;
 	}
 
-	getRealName(username) {
-		return this._chats[username].first_name;
+	getRealName(userid) {
+		return this._chats[userid].first_name;
 	}
 
-	async send(text, username = undefined) {
-		if (username) {
-			const chat = this._chats[username];
+	async send(text, userid = undefined) {
+		if (userid) {
+			const chat = this._chats[userid];
 
 			if (!chat) {
-				throw new Error(`Unregistered user ${username}`);
+				throw new Error(`Cannot find chat for user ${userid}`);
 			}
 
 			await this._call('sendMessage', {
@@ -109,10 +109,10 @@ class Bot {
 
 		for (const update of updates) {
 			if (update.message) {
-				const username = update.message.chat.username;
+				const userid = update.message.chat.userid;
 
-				if (this._allowedUsers.includes(username)) {
-					this._chats[username] = update.message.chat;
+				if (this._allowedUsers.includes(userid)) {
+					this._chats[userid] = update.message.chat;
 
 					chatsUpdated = true;
 				}

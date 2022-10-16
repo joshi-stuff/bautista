@@ -179,10 +179,10 @@ function formatSchedules(schedules, devices) {
 }
 
 async function processMessages(messages, devices, schedules, bot) {
-	for (const username of Object.keys(messages)) {
-		const realName = bot.getRealName(username);
+	for (const userid of Object.keys(messages)) {
+		const realName = bot.getRealName(userid);
 
-		for (let message of messages[username]) {
+		for (let message of messages[userid]) {
 			message = message.toLowerCase();
 
 			if (message.indexOf('apagar') !== -1) {
@@ -204,19 +204,19 @@ ${devices
 	.map((dev) => `    · ${dev.name}`)
 	.join('\n')}
 `,
-					username
+					userid
 				);
 			} else if (message.indexOf('encender') !== -1) {
 				// TODO: encender
 			} else if (message.indexOf('hola') !== -1) {
-				await bot.send(`Hola ${realName} 👋`, username);
+				await bot.send(`Hola ${realName} 👋`, userid);
 			} else if (message.indexOf('horario') !== -1) {
 				await bot.send(
 					`
 Las horas más baratas para cada dispositivo son:
 
 ${formatSchedules(schedules, devices)}`,
-					username
+					userid
 				);
 			}
 		}
