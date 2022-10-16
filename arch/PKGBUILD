@@ -16,6 +16,7 @@ makedepends=(
 )
 backup=(
 	'etc/bautista/config.json'
+	'etc/bautista/creds.json'
 )
 install='install.sh'
 
