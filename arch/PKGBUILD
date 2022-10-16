@@ -23,9 +23,6 @@ install='install.sh'
 prepare() {
 	rm -f $srcdir/$pkgname-$pkgver
 	ln -s $startdir/.. $srcdir/$pkgname-$pkgver
-
-	rm -f $srcdir/root
-	ln -s $startdir/root $srcdir/root
 }
 
 build() {
@@ -41,10 +38,9 @@ check() {
 }
 
 package() {
-	cd $srcdir
-	cp -arv ../root/* $pkgdir
-
 	cd $srcdir/$pkgname-$pkgver
+
+	cp -arv arch/root/* $pkgdir
 
 	mkdir -p $pkgdir/usr/lib/bautista
 	cp -arv node/bautista/*.js $pkgdir/usr/lib/bautista
