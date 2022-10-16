@@ -5,6 +5,8 @@
 
 ## arg 1:  the new package version
 post_install() {
+	chgrp bautista /etc/bautista/creds.json
+
 echo
 echo '88                                             88                                  '
 echo '88                                      ,d     ¨¨               ,d                 '
@@ -46,9 +48,9 @@ echo
 
 ## arg 1:  the new package version
 ## arg 2:  the old package version
-#post_upgrade() {
-	# do something here
-#}
+post_upgrade() {
+	chgrp bautista /etc/bautista/creds.json
+}
 
 ## arg 1:  the old package version
 #pre_remove() {
