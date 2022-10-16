@@ -11,12 +11,7 @@
 			}
 		}
 	},
-	"meross": {
-		"user": "***",
-		"password": "***"
-	},
 	"telegram": {
-		"token": "***",
 		"allowedUsers": [
 			"***"
 		]

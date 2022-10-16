@@ -1,0 +1,11 @@
+[Unit]
+Description=Bautista Server
+Documentation=https://github.com/joshi-stuff/bautista
+
+[Service]
+ExecStart=/usr/lib/bautista/bautista
+Restart=always
+User=bautista
+
+[Install]
+WantedBy=network-online.target

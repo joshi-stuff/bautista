@@ -1,3 +1,4 @@
 /arch/*.zst
 /arch/pkg
+/arch/src
 /node/node_modules

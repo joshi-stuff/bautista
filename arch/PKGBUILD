@@ -1,8 +1,8 @@
 # Maintainer: Iván Zaera Avellón <ivan dot zaera at protonmail dot com>
 pkgname=bautista
-pkgdesc="A domotic butler bot"
 pkgver=0.0.2
 pkgrel=1
+pkgdesc='A domotic butler bot'
 arch=('any')
 url='https://github.com/joshi-stuff/bautista'
 license=('GPL3')
@@ -14,29 +14,38 @@ makedepends=(
 	'npm'
 	'shadow'
 )
+backup=(
+	'etc/bautista/config.json'
+)
 install='install.sh'
 
 prepare() {
-	cd $srcdir
+	rm -f $srcdir/$pkgname-$pkgver
+	ln -s $startdir/.. $srcdir/$pkgname-$pkgver
+
+	rm -f $srcdir/root
+	ln -s $startdir/root $srcdir/root
 }
 
 build() {
-	cd $startdir/..
-
+	cd $srcdir/$pkgname-$pkgver
 	make clean
 	make build
 }
 
+check() {
+	cd $srcdir/$pkgname-$pkgver
+	make lint
+	make test
+}
+
 package() {
-	cd $pkgdir
+	cd $srcdir
+	cp -arv ../root/* $pkgdir
 
-	cp -rv $startdir/root/* .
+	cd $srcdir/$pkgname-$pkgver
 
-	mkdir -p ./usr/lib/bautista
-	cp -rv $startdir/../node/bautista/*.js ./usr/lib/bautista
-	cp -rv $startdir/../node/node_modules ./usr/lib/bautista
-
-	mkdir -p ./var/cache/bautista
-
-	mkdir -p ./var/run/bautista
+	mkdir -p $pkgdir/usr/lib/bautista
+	cp -arv node/bautista/*.js $pkgdir/usr/lib/bautista
+	cp -ar node/node_modules $pkgdir/usr/lib/bautista
 }

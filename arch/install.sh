@@ -4,9 +4,9 @@
 #}
 
 ## arg 1:  the new package version
-post_install() {
-	echo useradd -r -s /usr/bin/nologin bautista -U
-}
+#post_install() {
+	# do something here
+#}
 
 ## arg 1:  the new package version
 ## arg 2:  the old package version
@@ -21,9 +21,9 @@ post_install() {
 #}
 
 ## arg 1:  the old package version
-pre_remove() {
-	echo userdel -r bautista -U
-}
+#pre_remove() {
+	# do something here
+#}
 
 ## arg 1:  the old package version
 #post_remove() {
