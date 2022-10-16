@@ -5,7 +5,8 @@ const PersistedStatus = require('./PersistedStatus.js');
 const status = PersistedStatus.get();
 
 class Bot {
-	constructor(token, allowedUsers) {
+	constructor(token, adminUser, allowedUsers) {
+		this._adminUser = adminUser;
 		this._allowedUsers = allowedUsers;
 		this._bf = new BotFather(token);
 		this._chats = status.get('chats', {});
@@ -52,7 +53,13 @@ class Bot {
 
 			const userid = message.from.id;
 
-			if (!this._allowedUsers.includes(username)) {
+			if (!this._allowedUsers.includes(userid)) {
+				await this.send(
+					'He ignorado el siguiente mensaje 🤷:\n\n' +
+						JSON.stringify(message, null, 2),
+					this._adminUser
+				);
+
 				continue;
 			}
 

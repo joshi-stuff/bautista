@@ -8,7 +8,11 @@ async function main() {
 
 	const devices = config.devices;
 
-	const bot = new Bot(config.telegram.token, config.telegram.allowedUsers);
+	const bot = new Bot(
+		config.telegram.token,
+		config.telegram.adminUser,
+		config.telegram.allowedUsers
+	);
 
 	const schedules = {};
 
