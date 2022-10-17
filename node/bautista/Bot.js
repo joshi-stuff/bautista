@@ -76,7 +76,13 @@ class Bot {
 	}
 
 	getRealName(userid) {
-		return this._chats[userid].first_name;
+		const chat = this._chats[userid];
+
+		if (!chat || !chat.first_name) {
+			return 'Desconocido';
+		}
+
+		return chat.first_name;
 	}
 
 	async send(text, userid = undefined) {
