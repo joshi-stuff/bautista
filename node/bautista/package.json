@@ -2,7 +2,7 @@
 	"name": "bautista",
 	"version": "1.0.0",
 	"main": "index.js",
-	"license": "MIT",
+	"license": "GPL3",
 	"dependencies": {
 		"axios": "^0.27.2",
 		"botfather": "^3.8.0",
