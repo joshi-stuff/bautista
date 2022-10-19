@@ -9,7 +9,16 @@ fn main() {
 
     let mut bot = Bot::new(&cfg, &mut status);
 
-    let msgs = bot.get_new_messages(0).expect("error getting messages");
+    loop {
+        let msgs = bot
+            .get_new_messages(cfg.bautista.poll_seconds)
+            .expect("error getting messages");
 
-    dbg!(msgs);
+        for msg in msgs {
+            dbg!(&msg);
+
+            bot.send_message(msg.user_id, &format!("Hola {}", msg.user_name))
+                .expect("error sending message");
+        }
+    }
 }

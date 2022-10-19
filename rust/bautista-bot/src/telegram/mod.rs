@@ -85,6 +85,22 @@ impl<'a> Bot<'a> {
         Ok(msgs)
     }
 
+    pub fn send_message(&self, user_id: i64, text: &str) -> Result<()> {
+        let reply: api::Reply<api::Message> = self.get(
+            "sendMessage",
+            HashMap::from([
+                ("chat_id", format!("{}", user_id)),
+                ("text", String::from(text)),
+            ]),
+        )?;
+
+        if !reply.ok {
+            return Err(Box::new(TelegramError::CallFailed));
+        }
+
+        Ok(())
+    }
+
     fn get<T: DeserializeOwned>(&self, method: &str, params: HashMap<&str, String>) -> Result<T> {
         let mut url = format!(
             "https://api.telegram.org/bot{}/{}?",
@@ -97,6 +113,8 @@ impl<'a> Bot<'a> {
             url.push_str(&params.get(name).unwrap());
             url.push_str("&");
         }
+
+        //dbg!(&url);
 
         Ok(self.client.get(url).send()?.json()?)
     }
