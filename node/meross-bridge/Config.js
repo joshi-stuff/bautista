@@ -1,7 +1,5 @@
 const fs = require('fs');
 
-const CONFIG_FILE = '/etc/meross-bridge/config.json';
-
 class Config {
 	constructor(json) {
 		this.user = json.user;
@@ -10,9 +8,10 @@ class Config {
 }
 
 Config.read = function () {
-	const json = fs.existsSync(CONFIG_FILE)
-		? JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf-8'))
-		: {};
+	const json = {
+		user: process.env['MEROSS_USER'],
+		password: process.env['MEROSS_PASSWORD'],
+	};
 
 	json.user = json.user || '';
 	json.password = json.password || '';
