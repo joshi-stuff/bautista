@@ -1,0 +1,21 @@
+{
+	"name": "meross-bridge",
+	"version": "1.0.0",
+	"main": "index.js",
+	"license": "GPL3",
+	"dependencies": {
+		"axios": "^0.27.2",
+		"botfather": "^3.8.0",
+		"meross-cloud": "^2.1.1"
+	},
+	"scripts": {
+		"build": "true",
+		"clean": "true",
+		"format": "prettier -w '**/*.js'",
+		"lint": "true",
+		"test": "true"
+	},
+	"devDependencies": {
+		"prettier": "^2.7.1"
+	}
+}
