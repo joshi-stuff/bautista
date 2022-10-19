@@ -2,3 +2,4 @@
 /arch/pkg
 /arch/src
 /node/node_modules
+/rust/target
