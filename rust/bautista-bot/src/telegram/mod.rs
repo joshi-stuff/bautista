@@ -1,6 +1,4 @@
-use crate::config::Config;
-use crate::status::Status;
-use crate::Result;
+use crate::*;
 use reqwest::blocking::Client;
 use serde::de::DeserializeOwned;
 use std::cmp::max;

@@ -1,5 +1,4 @@
-use crate::config::Config;
-use crate::Result;
+use crate::*;
 use std::io::{BufRead, BufReader, Lines, Write};
 use std::process::{ChildStdin, ChildStdout, Command, Stdio};
 

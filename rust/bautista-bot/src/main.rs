@@ -1,7 +1,7 @@
-use bautista_bot::config::Config;
+use bautista_bot::command::*;
 use bautista_bot::meross::MerossBridge;
-use bautista_bot::status::Status;
 use bautista_bot::telegram::Bot;
+use bautista_bot::*;
 
 fn main() {
     let cfg = Config::new();
