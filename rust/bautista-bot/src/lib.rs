@@ -1,4 +1,5 @@
 pub mod config;
+pub mod meross;
 pub mod status;
 pub mod telegram;
 
