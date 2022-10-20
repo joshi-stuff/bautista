@@ -3,6 +3,7 @@
 	"version": "1.0.0",
 	"main": "index.js",
 	"license": "GPL-3.0-or-later",
+	"bin": "bin/meross-bridge",
 	"dependencies": {
 		"axios": "^0.27.2",
 		"botfather": "^3.8.0",
