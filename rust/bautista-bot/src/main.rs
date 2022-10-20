@@ -8,7 +8,9 @@ fn main() {
     let mut status = Status::new();
 
     let mut bot = Bot::new(&cfg, &mut status);
-    let mut bridge = MerossBridge::new(&cfg).expect("error spawning meross-bridge");
+    let bridge = MerossBridge::new(&cfg).expect("error spawning meross-bridge");
+
+    let commands: Vec<Box<dyn Command>> = vec![Box::new(TideCommand::new())];
 
     loop {
         let msgs = bot
@@ -18,9 +20,29 @@ fn main() {
         for msg in msgs {
             dbg!(&msg);
 
-            // TODO 1: multiplex commands
-            // TODO 2: implement TIDES command
+            for cmd in commands.iter() {
+                match cmd.run(&msg) {
+                    Err(err) => {
+                        let reply = format!("Ocurrió un error:\n{}", &err);
 
+                        dbg!(&reply);
+
+                        bot.send_message(msg.user_id, &reply)
+                            .expect("error sending message");
+                    }
+
+                    Ok(result) => {
+                        if let Some(reply) = result {
+                            dbg!(&reply);
+
+                            bot.send_message(msg.user_id, &reply)
+                                .expect("error sending message");
+                        }
+                    }
+                }
+            }
+
+            /*
             bridge
                 .send_text(&msg.text)
                 .expect("error writing to meross-bridge");
@@ -28,9 +50,7 @@ fn main() {
             let reply = bridge
                 .get_reply()
                 .expect("error reading from meross-bridge");
-
-            bot.send_message(msg.user_id, &format!("{}", &reply))
-                .expect("error sending message");
+            */
         }
     }
 }

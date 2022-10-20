@@ -1,3 +1,4 @@
+pub mod command;
 pub mod config;
 pub mod meross;
 pub mod status;
