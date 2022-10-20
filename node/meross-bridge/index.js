@@ -112,12 +112,19 @@ async function deviceEventHandler(event, dev, error) {
 }
 
 async function announce(eventName, ...things) {
-	console.log('!', eventName, things.join('|'));
+	process.stdout.write('! ', 'utf-8');
+	process.stdout.write(eventName, 'utf-8');
+	process.stdout.write(' ', 'utf-8');
+	process.stdout.write(things.join('|'), 'utf-8');
+	process.stdout.write('\n', 'utf-8');
 	// TODO: console.error announcements
 }
 
 async function reply(ok, ...things) {
-	console.log('>', ok ? 'OK' : 'ERROR', things.join('|'));
+	process.stdout.write('> ', 'utf-8');
+	process.stdout.write(ok ? 'OK ' : 'ERROR ', 'utf-8');
+	process.stdout.write(things.join('|'), 'utf-8');
+	process.stdout.write('\n', 'utf-8');
 	// TODO: console.error replies
 }
 
