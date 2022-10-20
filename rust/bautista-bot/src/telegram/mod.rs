@@ -4,6 +4,7 @@ use serde::de::DeserializeOwned;
 use std::cmp::max;
 use std::collections::HashMap;
 use thiserror::Error;
+use urlencoding::encode;
 
 mod api;
 
@@ -106,9 +107,11 @@ impl<'a> Bot<'a> {
         );
 
         for name in params.keys() {
+            let value = encode(&params.get(name).unwrap());
+
             url.push_str(name);
             url.push_str("=");
-            url.push_str(&params.get(name).unwrap());
+            url.push_str(&value);
             url.push_str("&");
         }
 
