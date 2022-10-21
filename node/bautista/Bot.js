@@ -38,8 +38,6 @@ class Bot {
 
 		const updates = await this._call('getUpdates', params);
 
-		this._updateChats(updates);
-
 		const digest = {};
 
 		for (const update of updates) {
@@ -76,31 +74,20 @@ class Bot {
 	}
 
 	getRealName(userid) {
-		const chat = this._chats[userid];
-
-		if (!chat || !chat.first_name) {
-			return 'Desconocido';
-		}
-
-		return chat.first_name;
+		// TODO: convert userid to name using config
+		return userid;
 	}
 
 	async send(text, userid = undefined) {
 		if (userid) {
-			const chat = this._chats[userid];
-
-			if (!chat) {
-				throw new Error(`Cannot find chat for user ${userid}`);
-			}
-
 			await this._call('sendMessage', {
-				chat_id: chat.id,
+				chat_id: userid,
 				text,
 			});
 		} else {
-			for (const chat of Object.values(this._chats)) {
+			for (const userid of this._allowedUsers) {
 				await this._call('sendMessage', {
-					chat_id: chat.id,
+					chat_id: userid,
 					text,
 				});
 			}
@@ -114,26 +101,6 @@ class Bot {
 			return json.result;
 		} else {
 			throw new Error(json.description);
-		}
-	}
-
-	_updateChats(updates) {
-		let chatsUpdated = false;
-
-		for (const update of updates) {
-			if (update.message) {
-				const userid = update.message.chat.userid;
-
-				if (this._allowedUsers.includes(userid)) {
-					this._chats[userid] = update.message.chat;
-
-					chatsUpdated = true;
-				}
-			}
-		}
-
-		if (chatsUpdated) {
-			status.set('chats', this._chats);
 		}
 	}
 }
