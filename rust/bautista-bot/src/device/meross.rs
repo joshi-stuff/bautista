@@ -1,6 +1,10 @@
 use crate::*;
 use std::io::{BufRead, BufReader, Lines, Write};
 use std::process::{ChildStdin, ChildStdout, Command, Stdio};
+use std::thread;
+use std::time::Duration;
+
+const THREE_SECONDS: Duration = Duration::from_secs(3);
 
 pub struct MerossBridge {
     stdin: ChildStdin,
@@ -30,6 +34,9 @@ impl MerossBridge {
         )
         .lines();
 
+        // Wait for bridge to settle
+        thread::sleep(THREE_SECONDS);
+
         Ok(MerossBridge { stdin, stdout })
     }
 
@@ -37,7 +44,7 @@ impl MerossBridge {
         loop {
             let line = self.stdout.next().unwrap()?;
 
-            dbg!(&line);
+            //dbg!(&line);
 
             if line.starts_with(">") {
                 return Ok(line);
