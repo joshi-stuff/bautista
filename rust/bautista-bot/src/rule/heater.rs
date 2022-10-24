@@ -1,6 +1,7 @@
 use super::RuleEval;
+use crate::prices::PowerPrices;
+use chrono::{DateTime, Local};
 
-#[derive(Clone, Copy, Debug)]
 pub struct RuleHeater {
     pivot_hour: i64,
 }
@@ -12,11 +13,13 @@ impl RuleHeater {
 }
 
 impl RuleEval for RuleHeater {
-    fn eval(&self) -> Option<bool> {
+    fn eval(&mut self, now: &DateTime<Local>) -> Option<bool> {
         Some(true)
     }
 
     fn is_consumed(&self) -> bool {
         false
     }
+
+    fn update_prices(&mut self, _prices: &PowerPrices) -> () {}
 }

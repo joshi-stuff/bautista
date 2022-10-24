@@ -4,20 +4,22 @@ use toml::Value;
 
 mod types;
 
-#[derive(Debug)]
 pub struct Config {
     pub bautista: Bautista,
+    pub esios: Esios,
     pub meross: Meross,
     pub telegram: Telegram,
     pub toml: Value,
 }
 
-#[derive(Debug)]
 pub struct Bautista {
     pub poll_seconds: i32,
 }
 
-#[derive(Debug)]
+pub struct Esios {
+    pub token: String,
+}
+
 pub struct Meross {
     pub bridge_path: String,
     pub devices: Vec<String>,
@@ -25,13 +27,11 @@ pub struct Meross {
     pub user: String,
 }
 
-#[derive(Clone, Copy, Debug)]
 pub enum Rule {
     Cheap(RuleCheap),
     Heater(RuleHeater),
 }
 
-#[derive(Debug)]
 pub struct Telegram {
     pub admin_user: i64,
     pub allowed_users: Vec<i64>,
@@ -53,6 +53,9 @@ impl Config {
         Config {
             bautista: Bautista {
                 poll_seconds: toml.bautista.poll_seconds,
+            },
+            esios: Esios {
+                token: toml.esios.token,
             },
             meross: Meross {
                 bridge_path: toml
@@ -94,9 +97,10 @@ impl Config {
 
         match rule_type.as_str() {
             "cheap" => {
+                let consecutive = get_bool(&cfg, "consecutive", device);
                 let hours = get_integer(&cfg, "hours", device);
 
-                Some(Rule::Cheap(RuleCheap::new(hours)))
+                Some(Rule::Cheap(RuleCheap::new(consecutive, hours)))
             }
 
             "heater" => {

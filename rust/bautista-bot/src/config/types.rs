@@ -14,6 +14,11 @@ pub struct Device {
 }
 
 #[derive(Deserialize)]
+pub struct Esios {
+    pub token: String,
+}
+
+#[derive(Deserialize)]
 pub struct Meross {
     pub bridge_path: Option<String>,
     pub devices: Vec<String>,
@@ -28,6 +33,7 @@ pub struct RuleHeater {
 
 #[derive(Deserialize)]
 pub struct RuleCheap {
+    pub consecutive: bool,
     pub hours: i32,
 }
 
@@ -41,6 +47,7 @@ pub struct Telegram {
 #[derive(Deserialize)]
 pub struct Toml {
     pub bautista: Bautista,
+    pub esios: Esios,
     pub meross: Meross,
     pub telegram: Telegram,
 }

@@ -1,6 +1,7 @@
 pub mod command;
 pub mod config;
 pub mod device;
+pub mod prices;
 pub mod rule;
 pub mod status;
 pub mod telegram;

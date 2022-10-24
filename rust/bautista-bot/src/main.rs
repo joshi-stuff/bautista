@@ -1,8 +1,10 @@
 use bautista_bot::command::*;
 use bautista_bot::device::DeviceStatus;
+use bautista_bot::prices::PowerPrices;
 use bautista_bot::rule::*;
 use bautista_bot::telegram::Bot;
 use bautista_bot::*;
+use chrono::Local;
 
 fn main() {
     // Core app objects
@@ -17,13 +19,41 @@ fn main() {
     let mut rules = DeviceRules::new(&cfg);
     let mut devices = DeviceStatus::new(&cfg);
 
-    // Report initial state
-    eprintln!("{:?}", &rules);
+    // Power prices
+    let mut prices = PowerPrices::new(&cfg);
 
     // Main loop
     loop {
+        // Update prices if necessary
+        match prices.update() {
+            Err(err) => {
+                bot.send_message(
+                    cfg.telegram.admin_user,
+                    &format!("No he podido actualizar los precios de la luz:\n{}", err),
+                )
+                .expect("error sending message");
+            }
+
+            Ok(updated) => {
+                if updated {
+                    rules.update_prices(&prices);
+
+                    // TODO: run simulation for non-controlled devices and show
+                    // a message with best times to turn them on
+
+                    bot.send_message(
+                        cfg.telegram.admin_user,
+                        &format!("Acabo de actualizar los precios de la luz:\n{}", prices),
+                    )
+                    .expect("error sending message");
+                }
+            }
+        }
+
         // Apply rules and remove consumed ones
-        let result = rules.eval();
+        let now = Local::now();
+
+        let result = rules.eval(&now);
 
         devices.update(&result);
 
