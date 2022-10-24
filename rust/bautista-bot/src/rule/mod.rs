@@ -1,6 +1,6 @@
 use crate::prices::PowerPrices;
 use crate::*;
-use chrono::{DateTime, Local};
+use chrono::{DateTime, Datelike, FixedOffset, Local, NaiveDate, TimeZone};
 use std::collections::HashMap;
 
 mod cheap;
@@ -15,13 +15,15 @@ pub trait RuleEval {
     fn update_prices(&mut self, prices: &PowerPrices) -> ();
 }
 
-pub struct DeviceRules {
+pub struct DeviceRules<'a> {
+    cfg: &'a Config,
     map: HashMap<String, Vec<Rule>>,
 }
 
-impl DeviceRules {
-    pub fn new(cfg: &Config) -> DeviceRules {
+impl<'a> DeviceRules<'a> {
+    pub fn new(cfg: &'a Config) -> DeviceRules<'a> {
         let mut device_rules = DeviceRules {
+            cfg,
             map: HashMap::new(),
         };
 
@@ -63,6 +65,52 @@ impl DeviceRules {
                     }
                 }
             }
+        }
+
+        result
+    }
+
+    /**
+     * Return a vector with hours when uncontrolled devices must be turned on.
+     */
+    pub fn get_uncontrolled_on_hours(&mut self) -> HashMap<String, Vec<i64>> {
+        let mut result: HashMap<String, Vec<i64>> = HashMap::new();
+
+        let now = Local::now();
+
+        for device in self.devices() {
+            match self.cfg.is_controlled(&device) {
+                None => continue,
+                Some(controlled) => {
+                    if controlled {
+                        continue;
+                    };
+                }
+            };
+
+            let mut on_hours = Vec::new();
+
+            let rules = self.map.get_mut(&device).unwrap();
+
+            if rules.len() != 1 {
+                panic!("Uncontrolled device {} can only have one rule", device);
+            }
+
+            let rule = as_mut_rule_eval(&mut rules[0]);
+
+            for hour in 0..24 {
+                let date_time = Local
+                    .ymd(now.year(), now.month(), now.day())
+                    .and_hms(hour, 0, 0);
+
+                if let Some(on) = rule.eval(&date_time) {
+                    if on {
+                        on_hours.push(hour as i64);
+                    }
+                }
+            }
+
+            result.insert(device, on_hours);
         }
 
         result

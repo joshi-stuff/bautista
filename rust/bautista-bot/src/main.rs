@@ -35,15 +35,34 @@ fn main() {
 
             Ok(updated) => {
                 if updated {
+                    // Update prices
                     rules.update_prices(&prices);
 
-                    // TODO: run simulation for non-controlled devices and show
-                    // a message with best times to turn them on
-
+                    // Broadcast message
                     bot.broadcast(&format!(
                         "Acabo de actualizar los precios de la luz:\n{}",
                         prices
                     ));
+
+                    // Broadcast non-controlled devices ON hours
+                    let mut report = String::new();
+
+                    let on_hours = rules.get_uncontrolled_on_hours();
+
+                    for (device, on_hours) in on_hours {
+                        report.push_str(&format!("  · {}:", device));
+
+                        for hour in on_hours {
+                            report.push_str(&format!(" {}:00 ", hour));
+                        }
+
+                        report.push_str("\n");
+                    }
+
+                    bot.broadcast(&format!(
+                        "Los mejores horarios para encender cada dispositivo son:\n{}",
+                        report
+                    ))
                 }
             }
         }
