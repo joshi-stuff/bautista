@@ -75,6 +75,7 @@ impl Config {
         }
     }
 
+    // TODO: move this method to DeviceRules so that Config is plain data
     pub fn get_rule(&self, device: &str) -> Option<Rule> {
         let cfg = self.toml.get("device");
 
@@ -104,8 +105,9 @@ impl Config {
 
             "heater" => {
                 let pivot_hour = get_integer(&cfg, "pivot_hour", device);
+                let hours = get_integer(&cfg, "hours", device);
 
-                Some(Rule::Heater(RuleHeater::new(pivot_hour)))
+                Some(Rule::Heater(RuleHeater::new(pivot_hour, hours)))
             }
 
             _ => {

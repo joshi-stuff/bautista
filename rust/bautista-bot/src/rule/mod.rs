@@ -1,10 +1,11 @@
 use crate::prices::PowerPrices;
 use crate::*;
-use chrono::{DateTime, Datelike, FixedOffset, Local, NaiveDate, TimeZone};
+use chrono::{DateTime, Datelike, Local, TimeZone};
 use std::collections::HashMap;
 
 mod cheap;
 mod heater;
+mod util;
 
 pub use cheap::RuleCheap;
 pub use heater::RuleHeater;
