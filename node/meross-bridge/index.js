@@ -104,7 +104,7 @@ async function deviceEventHandler(event, dev, error) {
 	} else {
 		switch (event) {
 			case 'errored': {
-				announce('ERRORED', dev.name ?? '', error ?? '');
+				announce('ERRORED', error ?? '');
 				break;
 			}
 		}
