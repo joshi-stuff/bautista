@@ -27,11 +27,10 @@ fn main() {
         // Update prices if necessary
         match prices.update() {
             Err(err) => {
-                bot.send_message(
-                    cfg.telegram.admin_user,
-                    &format!("No he podido actualizar los precios de la luz:\n{}", err),
-                )
-                .expect("error sending message");
+                bot.broadcast(&format!(
+                    "No he podido actualizar los precios de la luz:\n{}",
+                    err
+                ));
             }
 
             Ok(updated) => {
@@ -41,11 +40,10 @@ fn main() {
                     // TODO: run simulation for non-controlled devices and show
                     // a message with best times to turn them on
 
-                    bot.send_message(
-                        cfg.telegram.admin_user,
-                        &format!("Acabo de actualizar los precios de la luz:\n{}", prices),
-                    )
-                    .expect("error sending message");
+                    bot.broadcast(&format!(
+                        "Acabo de actualizar los precios de la luz:\n{}",
+                        prices
+                    ));
                 }
             }
         }
@@ -62,24 +60,16 @@ fn main() {
         for (device, result) in result.iter() {
             match result {
                 Err(err) => {
-                    bot.send_message(
-                        cfg.telegram.admin_user,
-                        &format!(
-                            "No he podido controlar el dispositivo {}:\n{:?}",
-                            device, err
-                        ),
-                    )
-                    .expect("error sending message");
+                    bot.broadcast(&format!(
+                        "No he podido controlar el dispositivo {}:\n{:?}",
+                        device, err
+                    ));
                 }
 
                 Ok(on) => {
                     let action = if *on { "encendido" } else { "apagado" };
 
-                    bot.send_message(
-                        cfg.telegram.admin_user,
-                        &format!("He {} el dispositivo {}", action, device),
-                    )
-                    .expect("error sending message");
+                    bot.broadcast(&format!("He {} el dispositivo {}", action, device));
                 }
             }
         }
@@ -100,18 +90,16 @@ fn main() {
                     Err(err) => {
                         let reply = format!("Ocurrió un error:\n{}", &err);
 
-                        dbg!(&reply);
+                        //dbg!(&reply);
 
-                        bot.send_message(msg.user_id, &reply)
-                            .expect("error sending message");
+                        bot.send_message(msg.user_id, &reply);
                     }
 
                     Ok(result) => {
                         if let Some(reply) = result {
                             dbg!(&reply);
 
-                            bot.send_message(msg.user_id, &reply)
-                                .expect("error sending message");
+                            bot.send_message(msg.user_id, &reply);
                         }
                     }
                 }

@@ -68,7 +68,6 @@ impl Config {
             },
             telegram: Telegram {
                 admin_user: toml.telegram.admin_user,
-                // TODO: add admin_user to allowed_users if missing
                 allowed_users: toml.telegram.allowed_users,
                 token: toml.telegram.token,
             },

@@ -36,6 +36,14 @@ impl<'a> Bot<'a> {
         }
     }
 
+    pub fn broadcast(&self, text: &str) -> () {
+        self.send_message(self.config.telegram.admin_user, text);
+
+        for user_id in &self.config.telegram.allowed_users {
+            self.send_message(*user_id, text);
+        }
+    }
+
     pub fn get_new_messages(&mut self, timeout_seconds: i32) -> Result<Vec<Message>> {
         let reply: api::Reply<Vec<api::Update>> = self.get(
             "getUpdates",
@@ -73,20 +81,8 @@ impl<'a> Bot<'a> {
         Ok(msgs)
     }
 
-    pub fn send_message(&self, user_id: i64, text: &str) -> Result<()> {
-        let reply: api::Reply<api::Message> = self.get(
-            "sendMessage",
-            HashMap::from([
-                ("chat_id", format!("{}", user_id)),
-                ("text", String::from(text)),
-            ]),
-        )?;
-
-        if !reply.ok {
-            return Err(Box::new(TelegramError::CallFailed));
-        }
-
-        Ok(())
+    pub fn send_to_admin(&self, text: &str) -> () {
+        self.send_message(self.config.telegram.admin_user, text);
     }
 
     fn get<T: DeserializeOwned>(&self, method: &str, params: HashMap<&str, String>) -> Result<T> {
@@ -107,5 +103,35 @@ impl<'a> Bot<'a> {
         //dbg!(&url);
 
         Ok(self.client.get(url).send()?.json()?)
+    }
+
+    pub fn send_message(&self, user_id: i64, text: &str) -> () {
+        let result = self.get(
+            "sendMessage",
+            HashMap::from([
+                ("chat_id", format!("{}", user_id)),
+                ("text", String::from(text)),
+            ]),
+        );
+
+        if let Err(err) = result {
+            eprintln!(
+                "Cannot send message to {}\n    Message: {}\n    Error: {}",
+                user_id, text, err
+            );
+
+            return;
+        }
+
+        let reply: api::Reply<api::Message> = result.unwrap();
+
+        if !reply.ok {
+            eprintln!(
+                "Cannot send message to {}\n    Message: {}\n    Reply: {:?}",
+                user_id, text, reply
+            );
+
+            return;
+        }
     }
 }
