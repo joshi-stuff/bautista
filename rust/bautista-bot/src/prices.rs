@@ -1,5 +1,7 @@
 use crate::*;
+use chrono::{Date, Local};
 use reqwest::blocking::Client;
+use serde::Deserialize;
 use std::fmt::{self, Display, Formatter};
 use std::result;
 use thiserror::Error;
@@ -16,8 +18,66 @@ pub enum EsiosError {
 pub struct PowerPrices {
     client: Client,
     today: Option<Vec<i64>>,
+    today_date: Option<Date<Local>>,
     token: String,
     tomorrow: Option<Vec<i64>>,
+}
+
+#[derive(Debug, Deserialize)]
+struct ApiReply {
+    #[serde(alias = "00-01")]
+    h00: ApiPrice,
+    #[serde(alias = "01-02")]
+    h01: ApiPrice,
+    #[serde(alias = "02-03")]
+    h02: ApiPrice,
+    #[serde(alias = "03-04")]
+    h03: ApiPrice,
+    #[serde(alias = "04-05")]
+    h04: ApiPrice,
+    #[serde(alias = "05-06")]
+    h05: ApiPrice,
+    #[serde(alias = "06-07")]
+    h06: ApiPrice,
+    #[serde(alias = "07-08")]
+    h07: ApiPrice,
+    #[serde(alias = "08-09")]
+    h08: ApiPrice,
+    #[serde(alias = "09-10")]
+    h09: ApiPrice,
+    #[serde(alias = "10-11")]
+    h10: ApiPrice,
+    #[serde(alias = "11-12")]
+    h11: ApiPrice,
+    #[serde(alias = "12-13")]
+    h12: ApiPrice,
+    #[serde(alias = "13-14")]
+    h13: ApiPrice,
+    #[serde(alias = "14-15")]
+    h14: ApiPrice,
+    #[serde(alias = "15-16")]
+    h15: ApiPrice,
+    #[serde(alias = "16-17")]
+    h16: ApiPrice,
+    #[serde(alias = "17-18")]
+    h17: ApiPrice,
+    #[serde(alias = "18-19")]
+    h18: ApiPrice,
+    #[serde(alias = "19-20")]
+    h19: ApiPrice,
+    #[serde(alias = "20-21")]
+    h20: ApiPrice,
+    #[serde(alias = "21-22")]
+    h21: ApiPrice,
+    #[serde(alias = "22-23")]
+    h22: ApiPrice,
+    #[serde(alias = "23-24")]
+    h23: ApiPrice,
+}
+
+#[derive(Debug, Deserialize)]
+struct ApiPrice {
+    price: f64,
 }
 
 impl PowerPrices {
@@ -25,6 +85,7 @@ impl PowerPrices {
         PowerPrices {
             client: Client::new(),
             today: None,
+            today_date: None,
             token: String::from(&cfg.esios.token),
             tomorrow: None,
         }
@@ -39,18 +100,47 @@ impl PowerPrices {
     }
 
     pub fn update(&mut self) -> Result<bool> {
-        if let Some(_) = self.today {
-            return Ok(false);
+        if let Some(today_date) = self.today_date {
+            if Local::now().date() == today_date {
+                return Ok(false);
+            }
         }
 
-        let mut today = vec![09936; 24];
+        let reply: ApiReply = self
+            .client
+            .get("https://api.preciodelaluz.org/v1/prices/all?zone=PCB")
+            .send()?
+            .json()?;
 
-        today[2] = 08345;
-        today[5] = 08341;
-        today[8] = 08342;
-        today[11] = 09000;
+        let mut today: Vec<i64> = Vec::new();
+
+        today.push((reply.h00.price * 100.0) as i64);
+        today.push((reply.h01.price * 100.0) as i64);
+        today.push((reply.h02.price * 100.0) as i64);
+        today.push((reply.h03.price * 100.0) as i64);
+        today.push((reply.h04.price * 100.0) as i64);
+        today.push((reply.h05.price * 100.0) as i64);
+        today.push((reply.h06.price * 100.0) as i64);
+        today.push((reply.h07.price * 100.0) as i64);
+        today.push((reply.h08.price * 100.0) as i64);
+        today.push((reply.h09.price * 100.0) as i64);
+        today.push((reply.h10.price * 100.0) as i64);
+        today.push((reply.h11.price * 100.0) as i64);
+        today.push((reply.h12.price * 100.0) as i64);
+        today.push((reply.h13.price * 100.0) as i64);
+        today.push((reply.h14.price * 100.0) as i64);
+        today.push((reply.h15.price * 100.0) as i64);
+        today.push((reply.h16.price * 100.0) as i64);
+        today.push((reply.h17.price * 100.0) as i64);
+        today.push((reply.h18.price * 100.0) as i64);
+        today.push((reply.h19.price * 100.0) as i64);
+        today.push((reply.h20.price * 100.0) as i64);
+        today.push((reply.h21.price * 100.0) as i64);
+        today.push((reply.h22.price * 100.0) as i64);
+        today.push((reply.h23.price * 100.0) as i64);
 
         self.today = Some(today);
+        self.today_date = Some(Local::now().date());
 
         Ok(true)
         /*
