@@ -1,8 +1,8 @@
-pub mod command;
+pub mod commands;
 pub mod config;
-pub mod device;
+pub mod devices;
 pub mod prices;
-pub mod rule;
+pub mod rules;
 pub mod status;
 pub mod telegram;
 

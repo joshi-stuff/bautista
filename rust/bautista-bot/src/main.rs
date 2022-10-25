@@ -1,7 +1,7 @@
-use bautista_bot::command::*;
-use bautista_bot::device::DeviceStatus;
+use bautista_bot::commands::*;
+use bautista_bot::devices::Devices;
 use bautista_bot::prices::Prices;
-use bautista_bot::rule::*;
+use bautista_bot::rules::*;
 use bautista_bot::telegram::Bot;
 use bautista_bot::*;
 use chrono::Local;
@@ -16,8 +16,8 @@ fn main() {
     let commands: Vec<Box<dyn Command>> = vec![Box::new(TideCommand::new())];
 
     // Devices and rules
-    let mut rules = DeviceRules::new(&cfg);
-    let mut devices = DeviceStatus::new(&cfg);
+    let mut rules = Rules::new(&cfg);
+    let mut devices = Devices::new(&cfg);
 
     // Power prices
     let mut prices = Prices::new(&cfg);

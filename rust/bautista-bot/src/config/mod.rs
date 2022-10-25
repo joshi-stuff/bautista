@@ -1,4 +1,4 @@
-use crate::rule::*;
+use crate::rules::*;
 use std::fs;
 use toml::Value;
 
@@ -143,16 +143,6 @@ fn get_bool(cfg: &Value, key: &str, device: &str) -> bool {
         .as_bool()
         .expect(&format!(
             "Parameter {} for device {} must be a boolean",
-            key, device
-        ))
-}
-
-fn get_i64(cfg: &Value, key: &str, device: &str) -> i64 {
-    cfg.get(key)
-        .expect(&format!("Parameter {} not found in device {}", key, device))
-        .as_integer()
-        .expect(&format!(
-            "Parameter {} for device {} must be an 64-bit integer",
             key, device
         ))
 }

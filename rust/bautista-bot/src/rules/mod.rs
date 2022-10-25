@@ -16,14 +16,14 @@ pub trait RuleEval {
     fn update_prices(&mut self, prices: &Prices) -> ();
 }
 
-pub struct DeviceRules<'a> {
+pub struct Rules<'a> {
     cfg: &'a Config,
     map: HashMap<String, Vec<Rule>>,
 }
 
-impl<'a> DeviceRules<'a> {
-    pub fn new(cfg: &'a Config) -> DeviceRules<'a> {
-        let mut device_rules = DeviceRules {
+impl<'a> Rules<'a> {
+    pub fn new(cfg: &'a Config) -> Rules<'a> {
+        let mut device_rules = Rules {
             cfg,
             map: HashMap::new(),
         };
