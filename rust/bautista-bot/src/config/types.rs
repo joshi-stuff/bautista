@@ -2,7 +2,7 @@ use serde::Deserialize;
 
 #[derive(Deserialize)]
 pub struct Bautista {
-    pub poll_seconds: i32,
+    pub poll_seconds: u32,
 }
 
 #[derive(Deserialize)]
@@ -28,13 +28,14 @@ pub struct Meross {
 
 #[derive(Deserialize)]
 pub struct RuleHeater {
-    pub pivot_hour: i32,
+    pub pivot_hour: u32,
+    pub hours: u32,
 }
 
 #[derive(Deserialize)]
 pub struct RuleCheap {
     pub consecutive: bool,
-    pub hours: i32,
+    pub hours: u32,
 }
 
 #[derive(Deserialize)]

@@ -1,17 +1,16 @@
 use super::util::get_cheapest_hours;
 use super::RuleEval;
-use crate::prices::PowerPrices;
-use chrono::Timelike;
-use chrono::{DateTime, Local};
+use crate::prices::Prices;
+use chrono::{DateTime, Local, Timelike};
 
 pub struct RuleCheap {
     consecutive: bool,
-    hours: i64,
+    hours: u32,
     on_at: Option<Vec<bool>>,
 }
 
 impl RuleCheap {
-    pub fn new(consecutive: bool, hours: i64) -> RuleCheap {
+    pub fn new(consecutive: bool, hours: u32) -> RuleCheap {
         RuleCheap {
             consecutive,
             hours,
@@ -32,21 +31,15 @@ impl RuleEval for RuleCheap {
         false
     }
 
-    fn update_prices(&mut self, prices: &PowerPrices) -> () {
-        match get_cheapest_hours(self.hours, self.consecutive, prices) {
-            None => {
-                self.on_at = None;
-            }
+    fn update_prices(&mut self, prices: &Prices) -> () {
+        let cheapest_hours = get_cheapest_hours(self.hours, self.consecutive, prices, None);
 
-            Some(cheapest_hours) => {
-                let mut on_at: Vec<bool> = vec![false; 24];
+        let mut on_at: Vec<bool> = vec![false; 24];
 
-                for hour in cheapest_hours {
-                    on_at[hour as usize] = true;
-                }
+        for hour in cheapest_hours {
+            on_at[hour as usize] = true;
+        }
 
-                self.on_at = Some(on_at);
-            }
-        };
+        self.on_at = Some(on_at);
     }
 }

@@ -1,4 +1,4 @@
-use crate::prices::PowerPrices;
+use crate::prices::Prices;
 use crate::*;
 use chrono::{DateTime, Datelike, Local, TimeZone};
 use std::collections::HashMap;
@@ -13,7 +13,7 @@ pub use heater::RuleHeater;
 pub trait RuleEval {
     fn eval(&mut self, now: &DateTime<Local>) -> Option<bool>;
     fn is_consumed(&self) -> bool;
-    fn update_prices(&mut self, prices: &PowerPrices) -> ();
+    fn update_prices(&mut self, prices: &Prices) -> ();
 }
 
 pub struct DeviceRules<'a> {
@@ -131,7 +131,7 @@ impl<'a> DeviceRules<'a> {
         }
     }
 
-    pub fn update_prices(&mut self, prices: &PowerPrices) -> () {
+    pub fn update_prices(&mut self, prices: &Prices) -> () {
         for device in self.devices() {
             let rules = self.map.get_mut(&device).unwrap();
 

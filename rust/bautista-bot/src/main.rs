@@ -1,6 +1,6 @@
 use bautista_bot::command::*;
 use bautista_bot::device::DeviceStatus;
-use bautista_bot::prices::PowerPrices;
+use bautista_bot::prices::Prices;
 use bautista_bot::rule::*;
 use bautista_bot::telegram::Bot;
 use bautista_bot::*;
@@ -20,7 +20,7 @@ fn main() {
     let mut devices = DeviceStatus::new(&cfg);
 
     // Power prices
-    let mut prices = PowerPrices::new(&cfg);
+    let mut prices = Prices::new(&cfg);
 
     // Main loop
     loop {

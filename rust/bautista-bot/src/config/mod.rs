@@ -13,7 +13,7 @@ pub struct Config {
 }
 
 pub struct Bautista {
-    pub poll_seconds: i32,
+    pub poll_seconds: u32,
 }
 
 pub struct Esios {
@@ -98,14 +98,14 @@ impl Config {
         match rule_type.as_str() {
             "cheap" => {
                 let consecutive = get_bool(&cfg, "consecutive", device);
-                let hours = get_integer(&cfg, "hours", device);
+                let hours = get_u32(&cfg, "hours", device);
 
                 Some(Rule::Cheap(RuleCheap::new(consecutive, hours)))
             }
 
             "heater" => {
-                let pivot_hour = get_integer(&cfg, "pivot_hour", device);
-                let hours = get_integer(&cfg, "hours", device);
+                let pivot_hour = get_u32(&cfg, "pivot_hour", device);
+                let hours = get_u32(&cfg, "hours", device);
 
                 Some(Rule::Heater(RuleHeater::new(pivot_hour, hours)))
             }
@@ -147,12 +147,12 @@ fn get_bool(cfg: &Value, key: &str, device: &str) -> bool {
         ))
 }
 
-fn get_integer(cfg: &Value, key: &str, device: &str) -> i64 {
+fn get_i64(cfg: &Value, key: &str, device: &str) -> i64 {
     cfg.get(key)
         .expect(&format!("Parameter {} not found in device {}", key, device))
         .as_integer()
         .expect(&format!(
-            "Parameter {} for device {} must be an integer",
+            "Parameter {} for device {} must be an 64-bit integer",
             key, device
         ))
 }
@@ -167,4 +167,14 @@ fn get_string(cfg: &Value, key: &str, device: &str) -> String {
                 key, device
             )),
     )
+}
+
+fn get_u32(cfg: &Value, key: &str, device: &str) -> u32 {
+    cfg.get(key)
+        .expect(&format!("Parameter {} not found in device {}", key, device))
+        .as_integer()
+        .expect(&format!(
+            "Parameter {} for device {} must be an unsigned 32-bit integer",
+            key, device
+        )) as u32
 }

@@ -44,7 +44,7 @@ impl<'a> Bot<'a> {
         }
     }
 
-    pub fn get_new_messages(&mut self, timeout_seconds: i32) -> Result<Vec<Message>> {
+    pub fn get_new_messages(&mut self, timeout_seconds: u32) -> Result<Vec<Message>> {
         let reply: api::Reply<Vec<api::Update>> = self.get(
             "getUpdates",
             HashMap::from([

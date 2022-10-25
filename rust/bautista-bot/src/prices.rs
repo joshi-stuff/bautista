@@ -1,5 +1,5 @@
 use crate::*;
-use chrono::{Date, Local};
+use chrono::{Date, Local, TimeZone};
 use reqwest::blocking::Client;
 use serde::Deserialize;
 use std::fmt::{self, Display, Formatter};
@@ -15,12 +15,12 @@ pub enum EsiosError {
     CallFailed(String),
 }
 
-pub struct PowerPrices {
+pub struct Prices {
     client: Client,
-    today: Option<Vec<i64>>,
-    today_date: Option<Date<Local>>,
+    last_update: Date<Local>,
+    today_prices: Vec<i64>,
     token: String,
-    tomorrow: Option<Vec<i64>>,
+    tomorrow_prices: Option<Vec<i64>>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -80,30 +80,30 @@ struct ApiPrice {
     price: f64,
 }
 
-impl PowerPrices {
-    pub fn new(cfg: &Config) -> PowerPrices {
-        PowerPrices {
+impl Prices {
+    pub fn new(cfg: &Config) -> Prices {
+        Prices {
             client: Client::new(),
-            today: None,
-            today_date: None,
+            last_update: Local.ymd(1980, 1, 1),
+            today_prices: vec![0; 24],
             token: String::from(&cfg.esios.token),
-            tomorrow: None,
+            tomorrow_prices: None,
         }
     }
 
-    pub fn today(&self) -> Option<Vec<i64>> {
-        self.today.clone()
+    pub fn today(&self) -> Vec<i64> {
+        self.today_prices.clone()
     }
 
     pub fn tomorrow(&self) -> Option<Vec<i64>> {
-        self.tomorrow.clone()
+        self.tomorrow_prices.clone()
     }
 
     pub fn update(&mut self) -> Result<bool> {
-        if let Some(today_date) = self.today_date {
-            if Local::now().date() == today_date {
-                return Ok(false);
-            }
+        let today = Local::now().date();
+
+        if self.last_update == today {
+            return Ok(false);
         }
 
         let reply: ApiReply = self
@@ -112,35 +112,35 @@ impl PowerPrices {
             .send()?
             .json()?;
 
-        let mut today: Vec<i64> = Vec::new();
+        let mut today_prices: Vec<i64> = Vec::new();
 
-        today.push((reply.h00.price * 100.0) as i64);
-        today.push((reply.h01.price * 100.0) as i64);
-        today.push((reply.h02.price * 100.0) as i64);
-        today.push((reply.h03.price * 100.0) as i64);
-        today.push((reply.h04.price * 100.0) as i64);
-        today.push((reply.h05.price * 100.0) as i64);
-        today.push((reply.h06.price * 100.0) as i64);
-        today.push((reply.h07.price * 100.0) as i64);
-        today.push((reply.h08.price * 100.0) as i64);
-        today.push((reply.h09.price * 100.0) as i64);
-        today.push((reply.h10.price * 100.0) as i64);
-        today.push((reply.h11.price * 100.0) as i64);
-        today.push((reply.h12.price * 100.0) as i64);
-        today.push((reply.h13.price * 100.0) as i64);
-        today.push((reply.h14.price * 100.0) as i64);
-        today.push((reply.h15.price * 100.0) as i64);
-        today.push((reply.h16.price * 100.0) as i64);
-        today.push((reply.h17.price * 100.0) as i64);
-        today.push((reply.h18.price * 100.0) as i64);
-        today.push((reply.h19.price * 100.0) as i64);
-        today.push((reply.h20.price * 100.0) as i64);
-        today.push((reply.h21.price * 100.0) as i64);
-        today.push((reply.h22.price * 100.0) as i64);
-        today.push((reply.h23.price * 100.0) as i64);
+        today_prices.push((reply.h00.price * 100.0) as i64);
+        today_prices.push((reply.h01.price * 100.0) as i64);
+        today_prices.push((reply.h02.price * 100.0) as i64);
+        today_prices.push((reply.h03.price * 100.0) as i64);
+        today_prices.push((reply.h04.price * 100.0) as i64);
+        today_prices.push((reply.h05.price * 100.0) as i64);
+        today_prices.push((reply.h06.price * 100.0) as i64);
+        today_prices.push((reply.h07.price * 100.0) as i64);
+        today_prices.push((reply.h08.price * 100.0) as i64);
+        today_prices.push((reply.h09.price * 100.0) as i64);
+        today_prices.push((reply.h10.price * 100.0) as i64);
+        today_prices.push((reply.h11.price * 100.0) as i64);
+        today_prices.push((reply.h12.price * 100.0) as i64);
+        today_prices.push((reply.h13.price * 100.0) as i64);
+        today_prices.push((reply.h14.price * 100.0) as i64);
+        today_prices.push((reply.h15.price * 100.0) as i64);
+        today_prices.push((reply.h16.price * 100.0) as i64);
+        today_prices.push((reply.h17.price * 100.0) as i64);
+        today_prices.push((reply.h18.price * 100.0) as i64);
+        today_prices.push((reply.h19.price * 100.0) as i64);
+        today_prices.push((reply.h20.price * 100.0) as i64);
+        today_prices.push((reply.h21.price * 100.0) as i64);
+        today_prices.push((reply.h22.price * 100.0) as i64);
+        today_prices.push((reply.h23.price * 100.0) as i64);
 
-        self.today = Some(today);
-        self.today_date = Some(Local::now().date());
+        self.today_prices = today_prices;
+        self.last_update = today;
 
         Ok(true)
         /*
@@ -169,28 +169,26 @@ impl PowerPrices {
     }
 }
 
-impl Display for PowerPrices {
+impl Display for Prices {
     fn fmt(&self, fmt: &mut Formatter<'_>) -> result::Result<(), fmt::Error> {
-        if let Some(today) = &self.today {
-            fmt.write_str("· Hoy:\n")?;
+        fmt.write_str("· Hoy:\n")?;
 
-            for i in 0..24 {
-                fmt.write_str(&format!(
-                    "    {}:00  {} €/KWh\n",
-                    i,
-                    today[i] as f32 / 100000.0
-                ))?;
-            }
+        for i in 0..24 {
+            fmt.write_str(&format!(
+                "    {}:00  {} €/KWh\n",
+                i,
+                self.today_prices[i] as f32 / 100000.0
+            ))?;
         }
 
-        if let Some(tomorrow) = &self.tomorrow {
+        if let Some(tomorrow_prices) = &self.tomorrow_prices {
             fmt.write_str("· Mañana:\n")?;
 
             for i in 0..24 {
                 fmt.write_str(&format!(
                     "    {}:00  {} €/KWh\n",
                     i,
-                    tomorrow[i] as f32 / 100000.0
+                    tomorrow_prices[i] as f32 / 100000.0
                 ))?;
             }
         }

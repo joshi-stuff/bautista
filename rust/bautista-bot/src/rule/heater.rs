@@ -1,17 +1,17 @@
 use super::util::get_cheapest_hours;
 use super::RuleEval;
-use crate::prices::PowerPrices;
-use chrono::Timelike;
-use chrono::{DateTime, Local};
+use crate::prices::Prices;
+use chrono::{DateTime, Local, Timelike};
 
 pub struct RuleHeater {
-    hours: i64,
+    hours: u32,
     on_at: Option<Vec<bool>>,
-    pivot_hour: i64,
+    /** The hour after when water must be hot */
+    pivot_hour: u32,
 }
 
 impl RuleHeater {
-    pub fn new(pivot_hour: i64, hours: i64) -> RuleHeater {
+    pub fn new(pivot_hour: u32, hours: u32) -> RuleHeater {
         RuleHeater {
             hours,
             on_at: None,
@@ -32,21 +32,21 @@ impl RuleEval for RuleHeater {
         false
     }
 
-    fn update_prices(&mut self, prices: &PowerPrices) -> () {
-        match get_cheapest_hours(self.hours, false, prices) {
-            None => {
-                self.on_at = None;
-            }
+    fn update_prices(&mut self, prices: &Prices) -> () {
+        let cheapest_hours = get_cheapest_hours(self.hours, false, prices, None);
+        let before_pivot_cheapest_hours =
+            get_cheapest_hours(self.hours, false, prices, Some(0..self.pivot_hour));
 
-            Some(cheapest_hours) => {
-                let mut on_at: Vec<bool> = vec![false; 24];
+        // Update on_at vector
+        let mut on_at: Vec<bool> = vec![false; 24];
 
-                for hour in cheapest_hours {
-                    on_at[hour as usize] = true;
-                }
+        for hour in before_pivot_cheapest_hours {
+            on_at[hour as usize] = true;
+        }
+        for hour in cheapest_hours {
+            on_at[hour as usize] = true;
+        }
 
-                self.on_at = Some(on_at);
-            }
-        };
+        self.on_at = Some(on_at);
     }
 }
