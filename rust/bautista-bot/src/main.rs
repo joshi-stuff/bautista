@@ -13,7 +13,7 @@ fn main() {
 
     // Telegram bot and commands
     let mut bot = Bot::new(&cfg, &mut status);
-    let commands: Vec<Box<dyn Command>> = vec![Box::new(TideCommand::new())];
+    let commands = Commands::new();
 
     // Devices and rules
     let mut rules = Rules::new(&cfg);
@@ -102,26 +102,12 @@ fn main() {
 
         // Process Telegram messages
         for msg in msgs {
-            dbg!(&msg);
+            eprintln!("[{}] {}: {}", &msg.user_id, &msg.user_name, &msg.text);
 
-            for cmd in commands.iter() {
-                match cmd.run(&msg) {
-                    Err(err) => {
-                        let reply = format!("Ocurrió un error:\n{}", &err);
+            if let Some(reply) = commands.run(&msg) {
+                eprintln!("[{}] REPLY: {}", msg.user_id, &reply);
 
-                        //dbg!(&reply);
-
-                        bot.send_message(msg.user_id, &reply);
-                    }
-
-                    Ok(result) => {
-                        if let Some(reply) = result {
-                            dbg!(&reply);
-
-                            bot.send_message(msg.user_id, &reply);
-                        }
-                    }
-                }
+                bot.send_message(msg.user_id, &reply);
             }
         }
     }

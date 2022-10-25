@@ -3,13 +3,13 @@ use crate::telegram::Message;
 use reqwest::blocking::Client;
 use serde::Deserialize;
 
-pub struct TideCommand {
+pub struct TidesCommand {
     client: Client,
 }
 
-impl TideCommand {
-    pub fn new() -> TideCommand {
-        TideCommand {
+impl TidesCommand {
+    pub fn new() -> TidesCommand {
+        TidesCommand {
             client: Client::new(),
         }
     }
@@ -43,11 +43,11 @@ struct Dato {
     tipo: String,
 }
 
-impl Command for TideCommand {
+impl Command for TidesCommand {
     fn run(&self, msg: &Message) -> Result<Option<String>> {
         let text = &msg.text;
 
-        if !text.starts_with("TIDE") {
+        if !text.starts_with("/tides") {
             return Ok(None);
         }
 
