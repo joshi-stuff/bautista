@@ -47,7 +47,7 @@ impl Command for TidesCommand {
     fn run(&self, msg: &Message) -> Result<Option<String>> {
         let text = &msg.text;
 
-        if !text.starts_with("/tides") {
+        if !text.starts_with("/mareas") {
             return Ok(None);
         }
 

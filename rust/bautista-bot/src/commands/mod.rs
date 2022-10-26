@@ -1,8 +1,10 @@
 use crate::telegram::Message;
 use crate::*;
 
+mod hello;
 mod tides;
 
+pub use hello::HelloCommand;
 pub use tides::TidesCommand;
 
 pub trait Command {
@@ -20,7 +22,7 @@ pub struct Commands {
 impl Commands {
     pub fn new() -> Commands {
         Commands {
-            cmds: vec![Box::new(TidesCommand::new())],
+            cmds: vec![Box::new(HelloCommand::new()), Box::new(TidesCommand::new())],
         }
     }
 
