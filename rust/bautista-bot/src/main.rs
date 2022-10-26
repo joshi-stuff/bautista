@@ -5,6 +5,8 @@ use bautista_bot::rules::*;
 use bautista_bot::telegram::Bot;
 use bautista_bot::*;
 use chrono::Local;
+use std::thread::sleep;
+use std::time::{Duration, SystemTime};
 
 fn main() {
     // Core app objects
@@ -27,7 +29,9 @@ fn main() {
         // Update prices if necessary
         match prices.update() {
             Err(err) => {
-                bot.broadcast(&format!(
+                eprintln!("[prices]: Error updating prices: {}", err);
+
+                bot.send_to_admin(&format!(
                     "No he podido actualizar los precios de la luz:\n{}",
                     err
                 ));
@@ -96,18 +100,39 @@ fn main() {
         rules.remove_consumed();
 
         // Get Telegram messages
-        let msgs = bot
-            .get_new_messages(cfg.bautista.poll_seconds)
-            .expect("error getting messages");
+        let start = SystemTime::now();
 
-        // Process Telegram messages
-        for msg in msgs {
-            eprintln!("[{}] {}: {}", &msg.user_id, &msg.user_name, &msg.text);
+        match bot.get_new_messages(cfg.bautista.poll_seconds) {
+            Err(err) => {
+                eprintln!("[telegram] Error getting messages: {}", err);
 
-            if let Some(reply) = commands.run(&msg) {
-                eprintln!("[{}] REPLY: {}", msg.user_id, &reply);
+                let remaining_secs = cfg.bautista.poll_seconds as u64
+                    - start
+                        .elapsed()
+                        .expect("Failed to obtain elapsed time")
+                        .as_secs();
 
-                bot.send_message(msg.user_id, &reply);
+                if remaining_secs > 0 {
+                    sleep(Duration::from_secs(remaining_secs));
+                }
+            }
+
+            Ok(msgs) => {
+                // Process Telegram messages
+                for msg in msgs {
+                    // TODO: filter by allowed_users
+
+                    eprintln!(
+                        "[telegram] {} ({}): {}",
+                        &msg.user_name, &msg.user_id, &msg.text
+                    );
+
+                    if let Some(reply) = commands.run(&msg) {
+                        eprintln!("[telegram] Replying to {}: {}", msg.user_id, &reply);
+
+                        bot.send_message(msg.user_id, &reply);
+                    }
+                }
             }
         }
     }
