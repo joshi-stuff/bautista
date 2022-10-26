@@ -15,9 +15,11 @@ pub enum TelegramError {
 }
 
 pub struct Bot<'a> {
+    admin_user: i64,
+    allowed_users: Vec<i64>,
     client: Client,
-    config: &'a Config,
     status: &'a mut Status,
+    token: String,
 }
 
 #[derive(Debug)]
@@ -28,18 +30,20 @@ pub struct Message {
 }
 
 impl<'a> Bot<'a> {
-    pub fn new(config: &'a Config, status: &'a mut Status) -> Bot {
+    pub fn new(cfg: &Config, status: &'a mut Status) -> Bot<'a> {
         Bot {
+            admin_user: cfg.telegram.admin_user,
+            allowed_users: cfg.telegram.allowed_users.clone(),
             client: Client::new(),
-            config,
             status,
+            token: cfg.telegram.token.clone(),
         }
     }
 
     pub fn broadcast(&self, text: &str) -> () {
-        self.send_message(self.config.telegram.admin_user, text);
+        self.send_message(self.admin_user, text);
 
-        for user_id in &self.config.telegram.allowed_users {
+        for user_id in &self.allowed_users {
             self.send_message(*user_id, text);
         }
     }
@@ -82,14 +86,11 @@ impl<'a> Bot<'a> {
     }
 
     pub fn send_to_admin(&self, text: &str) -> () {
-        self.send_message(self.config.telegram.admin_user, text);
+        self.send_message(self.admin_user, text);
     }
 
     fn get<T: DeserializeOwned>(&self, method: &str, params: HashMap<&str, String>) -> Result<T> {
-        let mut url = format!(
-            "https://api.telegram.org/bot{}/{}?",
-            self.config.telegram.token, method
-        );
+        let mut url = format!("https://api.telegram.org/bot{}/{}?", self.token, method);
 
         for name in params.keys() {
             let value = encode(&params.get(name).unwrap());
