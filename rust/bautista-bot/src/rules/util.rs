@@ -50,6 +50,11 @@ pub fn get_cheapest_hours(
 
         prices_hour.sort_by(|l, r| l.0.cmp(&r.0));
 
+        let prices_hour: Vec<&(u32, u32)> = prices_hour
+            .iter()
+            .filter(|ph| range.contains(&ph.1))
+            .collect();
+
         for hour in 0..hours {
             let price_hour = prices_hour[hour as usize];
 
