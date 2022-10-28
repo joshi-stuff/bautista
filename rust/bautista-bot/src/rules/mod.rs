@@ -1,7 +1,8 @@
 use crate::prices::Prices;
 use crate::*;
-use chrono::{DateTime, Datelike, Local, TimeZone};
+use chrono::{DateTime, Local, Timelike};
 use std::collections::HashMap;
+use std::ops::Range;
 
 mod cheap;
 mod heater;
@@ -10,31 +11,49 @@ mod util;
 pub use cheap::RuleCheap;
 pub use heater::RuleHeater;
 
-pub trait RuleEval {
-    fn eval(&mut self, now: &DateTime<Local>) -> Option<bool>;
-    fn is_consumed(&self) -> bool;
-    fn update_prices(&mut self, prices: &Prices) -> ();
+pub trait Rule {
+    fn get_on_hours(&self, prices: &Prices, hours: Range<u32>) -> OnHours;
 }
 
-pub struct Rules<'a> {
-    cfg: &'a Config,
-    map: HashMap<String, Vec<Rule>>,
+pub struct OnHours {
+    on_hours: Vec<bool>,
 }
 
-impl<'a> Rules<'a> {
-    pub fn new(cfg: &'a Config) -> Rules<'a> {
-        let mut device_rules = Rules {
-            cfg,
-            map: HashMap::new(),
-        };
+impl OnHours {
+    fn from_hours(hours: Vec<u32>) -> OnHours {
+        let mut on_hours = vec![false; 24];
+
+        for hour in hours {
+            on_hours[hour as usize] = true;
+        }
+
+        OnHours { on_hours }
+    }
+
+    pub fn on_at(&self, hour: u32) -> bool {
+        self.on_hours[hour as usize]
+    }
+}
+
+pub struct Rules {
+    device_rules: HashMap<String, Box<dyn Rule>>,
+    prices: Prices,
+}
+
+impl Rules {
+    pub fn new(cfg: &Config) -> Rules {
+        let mut device_rules = HashMap::new();
 
         for device in &cfg.meross.devices {
             if let Some(rule) = cfg.get_rule(device) {
-                device_rules.insert(device, rule);
+                device_rules.insert(device.clone(), as_boxed_rule(rule));
             }
         }
 
-        device_rules
+        Rules {
+            device_rules,
+            prices: Prices::new(&cfg),
+        }
     }
 
     /**
@@ -46,70 +65,31 @@ impl<'a> Rules<'a> {
      * Otherwise it will be a boolean with the desired status of the device
      * according to the rules.
      */
-    pub fn eval(&mut self, now: &DateTime<Local>) -> HashMap<String, Option<bool>> {
+    pub fn eval(&self, now: &DateTime<Local>) -> HashMap<String, Option<bool>> {
         let mut result: HashMap<String, Option<bool>> = HashMap::new();
 
-        for device in self.devices() {
-            result.insert(String::from(&device), None);
+        // TODO: get results from cache
+        let on_hours = self.get_on_hours(0..24);
 
-            let rules = self.map.get_mut(&device).unwrap();
-
-            for i in (0..rules.len()).rev() {
-                let rule = as_mut_rule_eval(rules.get_mut(i).unwrap());
-
-                match rule.eval(now) {
-                    None => {}
-
-                    Some(on) => {
-                        result.insert(String::from(device), Some(on));
-                        break;
-                    }
-                }
-            }
+        for (device, on_hours) in on_hours {
+            result.insert(device.clone(), Some(on_hours.on_at(now.hour())));
         }
 
         result
     }
 
     /**
-     * Return a vector with hours when uncontrolled devices must be turned on.
+     * Return a map of devices to vectors containing hours when devices must be
+     * turned on.
      */
-    pub fn get_uncontrolled_on_hours(&mut self) -> HashMap<String, Vec<i64>> {
-        let mut result: HashMap<String, Vec<i64>> = HashMap::new();
-
-        let now = Local::now();
+    // TODO: implement from_hour support
+    pub fn get_on_hours(&self, hours: Range<u32>) -> HashMap<String, OnHours> {
+        let mut result: HashMap<String, OnHours> = HashMap::new();
 
         for device in self.devices() {
-            match self.cfg.is_controlled(&device) {
-                None => continue,
-                Some(controlled) => {
-                    if controlled {
-                        continue;
-                    };
-                }
-            };
+            let rule = self.device_rules.get(&device).unwrap();
 
-            let mut on_hours = Vec::new();
-
-            let rules = self.map.get_mut(&device).unwrap();
-
-            if rules.len() != 1 {
-                panic!("Uncontrolled device {} can only have one rule", device);
-            }
-
-            let rule = as_mut_rule_eval(&mut rules[0]);
-
-            for hour in 0..24 {
-                let date_time = Local
-                    .ymd(now.year(), now.month(), now.day())
-                    .and_hms(hour, 0, 0);
-
-                if let Some(on) = rule.eval(&date_time) {
-                    if on {
-                        on_hours.push(hour as i64);
-                    }
-                }
-            }
+            let on_hours = rule.get_on_hours(&self.prices, hours.start..hours.end);
 
             result.insert(device, on_hours);
         }
@@ -117,60 +97,28 @@ impl<'a> Rules<'a> {
         result
     }
 
-    pub fn remove_consumed(&mut self) -> () {
-        for device in self.devices() {
-            let rules = self.map.get_mut(&device).unwrap();
-
-            for i in (0..rules.len()).rev() {
-                let rule = as_rule_eval(rules.get(i).unwrap());
-
-                if rule.is_consumed() {
-                    rules.remove(i);
-                }
-            }
-        }
+    pub fn prices(&self) -> &Prices {
+        &self.prices
     }
 
-    pub fn update_prices(&mut self, prices: &Prices) -> () {
-        for device in self.devices() {
-            let rules = self.map.get_mut(&device).unwrap();
+    pub fn update_prices(&mut self) -> Result<bool> {
+        self.prices.update()
 
-            for i in 0..rules.len() {
-                let rule = as_mut_rule_eval(rules.get_mut(i).unwrap());
-
-                rule.update_prices(prices);
-            }
-        }
-    }
-
-    fn insert(&mut self, device: &str, rule: Rule) -> () {
-        if !self.map.contains_key(device) {
-            self.map.insert(String::from(device), Vec::new());
-        }
-
-        let rules = self.map.get_mut(device).unwrap();
-
-        rules.push(rule);
+        // TODO: cache rules get_on_hours(0..24) for eval
     }
 
     fn devices(&self) -> Vec<String> {
-        let devices: Vec<&String> = self.map.keys().collect();
+        let devices: Vec<&String> = self.device_rules.keys().collect();
+
         let devices: Vec<String> = devices.iter().map(|key| String::from(*key)).collect();
 
         devices
     }
 }
 
-pub fn as_mut_rule_eval(rule: &mut Rule) -> &mut dyn RuleEval {
+pub fn as_boxed_rule(rule: config::Rule) -> Box<dyn Rule> {
     match rule {
-        Rule::Heater(rule) => rule,
-        Rule::Cheap(rule) => rule,
-    }
-}
-
-pub fn as_rule_eval(rule: &Rule) -> &dyn RuleEval {
-    match rule {
-        Rule::Heater(rule) => rule,
-        Rule::Cheap(rule) => rule,
+        config::Rule::Heater(rule) => Box::new(rule),
+        config::Rule::Cheap(rule) => Box::new(rule),
     }
 }

@@ -1,6 +1,6 @@
 use bautista_bot::commands::*;
 use bautista_bot::devices::Devices;
-use bautista_bot::prices::Prices;
+use bautista_bot::report::*;
 use bautista_bot::rules::*;
 use bautista_bot::telegram::Bot;
 use bautista_bot::*;
@@ -13,21 +13,18 @@ fn main() {
     let cfg = Config::new();
     let mut status = Status::new();
 
-    // Telegram bot and commands
-    let mut bot = Bot::new(&cfg, &mut status);
-    let commands = Commands::new();
-
     // Devices and rules
     let mut rules = Rules::new(&cfg);
     let mut devices = Devices::new(&cfg);
 
-    // Power prices
-    let mut prices = Prices::new(&cfg);
+    // Telegram bot and commands
+    let mut bot = Bot::new(&cfg, &mut status);
+    let commands = Commands::new();
 
     // Main loop
     loop {
         // Update prices if necessary
-        match prices.update() {
+        match rules.update_prices() {
             Err(err) => {
                 eprintln!("[prices]: Error updating prices: {}", err);
 
@@ -39,42 +36,21 @@ fn main() {
 
             Ok(updated) => {
                 if updated {
-                    // Update prices
-                    rules.update_prices(&prices);
-
-                    // Broadcast message
                     bot.broadcast(&format!(
                         "Acabo de actualizar los precios de la luz:\n{}",
-                        prices
+                        rules.prices()
                     ));
-
-                    // Broadcast non-controlled devices ON hours
-                    let mut report = String::new();
-
-                    let on_hours = rules.get_uncontrolled_on_hours();
-
-                    for (device, on_hours) in on_hours {
-                        report.push_str(&format!("  · {}:", device));
-
-                        for hour in on_hours {
-                            report.push_str(&format!(" {}:00 ", hour));
-                        }
-
-                        report.push_str("\n");
-                    }
 
                     bot.broadcast(&format!(
                         "Los mejores horarios para encender cada dispositivo son:\n{}",
-                        report
+                        format_on_hours(&rules.get_on_hours(0..24))
                     ))
                 }
             }
         }
 
-        // Apply rules and remove consumed ones
-        let now = Local::now();
-
-        let result = rules.eval(&now);
+        // Apply rules
+        let result = rules.eval(&Local::now());
 
         devices.update(&result);
 
@@ -97,8 +73,6 @@ fn main() {
             }
         }
 
-        rules.remove_consumed();
-
         // Get Telegram messages
         let start = SystemTime::now();
 
@@ -106,14 +80,14 @@ fn main() {
             Err(err) => {
                 eprintln!("[telegram] Error getting messages: {}", err);
 
-                let remaining_secs = cfg.bautista.poll_seconds as u64
-                    - start
-                        .elapsed()
-                        .expect("Failed to obtain elapsed time")
-                        .as_secs();
+                let timeout = cfg.bautista.poll_seconds as u64;
+                let elapsed = start
+                    .elapsed()
+                    .expect("Failed to obtain elapsed time")
+                    .as_secs();
 
-                if remaining_secs > 0 {
-                    sleep(Duration::from_secs(remaining_secs));
+                if elapsed < timeout {
+                    sleep(Duration::from_secs(timeout - elapsed));
                 }
             }
 

@@ -2,6 +2,7 @@ pub mod commands;
 pub mod config;
 pub mod devices;
 pub mod prices;
+pub mod report;
 pub mod rules;
 pub mod status;
 pub mod telegram;

@@ -1,16 +1,17 @@
 use self::pdll::PddlReply;
 use crate::*;
-use chrono::{Date, Local, TimeZone};
+use chrono::prelude::*;
 use reqwest::blocking::Client;
 use std::fmt::{self, Display, Formatter};
 use std::result;
 
-mod esios;
+//mod esios;
 mod pdll;
 
 pub struct Prices {
     client: Client,
     last_update: Date<Local>,
+    // TODO: make prices u64
     today_prices: Vec<i64>,
     token: String,
     tomorrow_prices: Option<Vec<i64>>,
@@ -37,9 +38,10 @@ impl Prices {
 
     pub fn update(&mut self) -> Result<bool> {
         if self.token == "" {
-            let today = Local::now().date();
+            let today = Local::now();
+            let now = today.time();
 
-            if self.last_update == today {
+            if self.last_update == today.date() || (now.hour() == 0 && now.minute() < 3) {
                 return Ok(false);
             }
 
@@ -77,7 +79,7 @@ impl Prices {
             today_prices.push((reply.h23.price * 100.0) as i64);
 
             self.today_prices = today_prices;
-            self.last_update = today;
+            self.last_update = today.date();
 
             Ok(true)
         } else {
@@ -110,6 +112,8 @@ impl Prices {
 
 impl Display for Prices {
     fn fmt(&self, fmt: &mut Formatter<'_>) -> result::Result<(), fmt::Error> {
+        // TODO: show 🟢, 🟡, and 🔴 next to prices
+
         fmt.write_str("· Hoy:\n")?;
 
         for i in 0..24 {
