@@ -16,11 +16,11 @@ impl RuleHeater {
 
 impl Rule for RuleHeater {
     fn get_on_hours(&self, prices: &Prices, hours: Range<u32>) -> OnHours {
-        let mut cheapest_hours = get_cheapest_hours(self.hours, false, prices, Some(hours));
+        let mut cheapest_hours =
+            get_cheapest_hours(self.hours, false, prices, Some(hours.start..hours.end));
 
-        // TODO: exclude pivot_hours not in range
         for hour in get_cheapest_hours(self.hours, false, prices, Some(0..self.pivot_hour)) {
-            if !cheapest_hours.contains(&hour) {
+            if hours.contains(&hour) && !cheapest_hours.contains(&hour) {
                 cheapest_hours.push(hour);
             }
         }

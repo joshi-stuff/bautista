@@ -82,7 +82,6 @@ impl Rules {
      * Return a map of devices to vectors containing hours when devices must be
      * turned on.
      */
-    // TODO: implement from_hour support
     pub fn get_on_hours(&self, hours: Range<u32>) -> HashMap<String, OnHours> {
         let mut result: HashMap<String, OnHours> = HashMap::new();
 

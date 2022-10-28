@@ -10,7 +10,7 @@ impl HelloCommand {
 }
 
 impl Command for HelloCommand {
-    fn run(&self, msg: &Message) -> Result<Option<String>> {
+    fn run(&self, msg: &Message, _rules: &Rules) -> Result<Option<String>> {
         let text = &msg.text;
 
         if !text.starts_with("/hola") {

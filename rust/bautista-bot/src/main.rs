@@ -1,8 +1,3 @@
-use bautista_bot::commands::*;
-use bautista_bot::devices::Devices;
-use bautista_bot::report::*;
-use bautista_bot::rules::*;
-use bautista_bot::telegram::Bot;
 use bautista_bot::*;
 use chrono::Local;
 use std::thread::sleep;
@@ -10,15 +5,17 @@ use std::time::{Duration, SystemTime};
 
 fn main() {
     // Core app objects
-    let cfg = Config::new();
+    let config = Config::new();
     let mut status = Status::new();
 
     // Devices and rules
-    let mut rules = Rules::new(&cfg);
-    let mut devices = Devices::new(&cfg);
+    let mut rules = Rules::new(&config);
+    let mut devices = Devices::new(&config);
 
-    // Telegram bot and commands
-    let mut bot = Bot::new(&cfg, &mut status);
+    // Telegram bot
+    let mut bot = Bot::new(&config, &mut status);
+
+    // Command dispatcher
     let commands = Commands::new();
 
     // Main loop
@@ -76,11 +73,11 @@ fn main() {
         // Get Telegram messages
         let start = SystemTime::now();
 
-        match bot.get_new_messages(cfg.bautista.poll_seconds) {
+        match bot.get_new_messages(config.bautista.poll_seconds) {
             Err(err) => {
                 eprintln!("[telegram] Error getting messages: {}", err);
 
-                let timeout = cfg.bautista.poll_seconds as u64;
+                let timeout = config.bautista.poll_seconds as u64;
                 let elapsed = start
                     .elapsed()
                     .expect("Failed to obtain elapsed time")
@@ -101,7 +98,7 @@ fn main() {
                         &msg.user_name, &msg.user_id, &msg.text
                     );
 
-                    if let Some(reply) = commands.run(&msg) {
+                    if let Some(reply) = commands.run(&msg, &rules) {
                         eprintln!("[telegram] Replying to {}: {}", msg.user_id, &reply);
 
                         bot.send_message(msg.user_id, &reply);

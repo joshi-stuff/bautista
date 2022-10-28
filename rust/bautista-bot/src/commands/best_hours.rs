@@ -1,8 +1,8 @@
 use super::*;
-use crate::report::*;
-use crate::rules::Rules;
 use crate::telegram::Message;
+use crate::util::format_on_hours::*;
 use chrono::prelude::*;
+use std::cmp::min;
 
 pub struct BestHoursCommand {}
 
@@ -13,7 +13,7 @@ impl BestHoursCommand {
 }
 
 impl Command for BestHoursCommand {
-    fn run(&self, msg: &Message) -> Result<Option<String>> {
+    fn run(&self, msg: &Message, rules: &Rules) -> Result<Option<String>> {
         let text = &msg.text;
 
         if !text.starts_with("/horario") {
@@ -34,13 +34,12 @@ impl Command for BestHoursCommand {
             }
         };
 
-        Ok(None)
-        /*
+        let from_hour = min(23, from_hour);
+
         Ok(Some(format!(
             "Los mejores horarios para encender cada dispositivo a partir de las {}:00 son:\n{}",
             from_hour,
-            format_on_hours(&rules.get_on_hours(from_hour))
+            format_on_hours(&rules.get_on_hours(from_hour..24))
         )))
-        */
     }
 }

@@ -44,7 +44,7 @@ struct Dato {
 }
 
 impl Command for TidesCommand {
-    fn run(&self, msg: &Message) -> Result<Option<String>> {
+    fn run(&self, msg: &Message, _rules: &Rules) -> Result<Option<String>> {
         let text = &msg.text;
 
         if !text.starts_with("/mareas") {
