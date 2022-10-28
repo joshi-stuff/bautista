@@ -18,8 +18,15 @@ struct Store {
 
 impl Status {
     pub fn new() -> Status {
-        let toml = fs::read_to_string("/run/bautista/status.toml")
-            .expect("Failed to load /run/bautista/status.toml");
+        let toml = match fs::read_to_string("/run/bautista/status.toml") {
+            Err(_) => String::from(
+                "
+                [telegram]
+                last_update_id = 0
+                ",
+            ),
+            Ok(toml) => toml,
+        };
 
         let toml: types::Toml = toml::from_str(&toml).unwrap();
 
