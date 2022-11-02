@@ -1,7 +1,6 @@
 use crate::*;
 use reqwest::blocking::Client;
 use serde::de::DeserializeOwned;
-use std::cmp::max;
 use std::collections::HashMap;
 use thiserror::Error;
 use urlencoding::encode;
@@ -68,9 +67,7 @@ impl<'a> Bot<'a> {
         let mut msgs: Vec<Message> = Vec::new();
 
         for update in reply.result {
-            self.status
-                .telegram
-                .set_last_update_id(max(self.status.telegram.last_update_id(), update.update_id))?;
+            self.status.telegram.set_last_update_id(update.update_id)?;
 
             let msg = update.message.unwrap();
             let from = msg.from.unwrap();
