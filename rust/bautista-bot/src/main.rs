@@ -121,7 +121,3 @@ He recibido un mensaje de un usuario desconocido:
         }
     }
 }
-
-fn log(text: &str) -> () {
-    // TODO: add date to eprintln!() logs
-}
