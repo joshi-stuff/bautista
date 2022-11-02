@@ -37,3 +37,12 @@ pub struct Reply<T> {
     pub ok: bool,
     pub result: T,
 }
+
+impl Reply<Vec<Update>> {
+    pub fn empty() -> Reply<Vec<Update>> {
+        Reply {
+            ok: true,
+            result: Vec::new(),
+        }
+    }
+}

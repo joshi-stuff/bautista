@@ -48,7 +48,7 @@ impl<'a> Bot<'a> {
     }
 
     pub fn get_new_messages(&mut self, timeout_seconds: u32) -> Result<Vec<Message>> {
-        let reply: api::Reply<Vec<api::Update>> = self.get(
+        let reply: api::Reply<Vec<api::Update>> = match self.get(
             "getUpdates",
             HashMap::from([
                 (
@@ -58,7 +58,16 @@ impl<'a> Bot<'a> {
                 ("timeout", format!("{}", timeout_seconds)),
                 ("allowed_updates", format!("[\"message\"]")),
             ]),
-        )?;
+        ) {
+            Err(err) => {
+                if err.is_timeout() {
+                    api::Reply::empty()
+                } else {
+                    return Err(Box::new(err));
+                }
+            }
+            Ok(reply) => reply,
+        };
 
         if !reply.ok {
             return Err(Box::new(TelegramError::CallFailed));
@@ -86,7 +95,11 @@ impl<'a> Bot<'a> {
         self.send_message(self.admin_user, text);
     }
 
-    fn get<T: DeserializeOwned>(&self, method: &str, params: HashMap<&str, String>) -> Result<T> {
+    fn get<T: DeserializeOwned>(
+        &self,
+        method: &str,
+        params: HashMap<&str, String>,
+    ) -> core::result::Result<T, reqwest::Error> {
         let mut url = format!("https://api.telegram.org/bot{}/{}?", self.token, method);
 
         for name in params.keys() {
