@@ -54,5 +54,6 @@ pub struct PddlReply {
 
 #[derive(Debug, Deserialize)]
 pub struct PddlPrice {
+    pub date: String,
     pub price: f64,
 }
