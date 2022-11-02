@@ -6,23 +6,23 @@ NODE_MODULES = node/node_modules
 # Project targets
 #
 build: $(NODE_MODULES)
-	cd node && yarn workspaces run build
+	cd node && npm run build --workspaces
 	cd rust && cargo build
 
 clean: $(NODE_MODULES)
-	cd node && yarn workspaces run clean
+	cd node && npm run clean --workspaces
 	cd rust && cargo clean
 
 format: $(NODE_MODULES) 
-	cd node && yarn workspaces run format
+	cd node && npm run format --workspaces
 	cd rust && cargo fmt
 
 lint: $(NODE_MODULES)
-	cd node && yarn workspaces run lint
+	cd node && npm run lint --workspaces
 	cd rust && cargo check
 
 test: $(NODE_MODULES)
-	cd node && yarn workspaces run test
+	cd node && npm run test --workspaces
 	cd rust && cargo test
 
 #
@@ -41,4 +41,4 @@ install:
 # Internal targets
 #
 $(NODE_MODULES):
-	cd node/bautista && yarn
+	cd node && npm install
