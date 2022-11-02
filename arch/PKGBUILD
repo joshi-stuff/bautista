@@ -1,6 +1,6 @@
 # Maintainer: Iván Zaera Avellón <ivan dot zaera at protonmail dot com>
 pkgname=bautista
-pkgver=0.0.6
+pkgver=0.0.7
 pkgrel=1
 pkgdesc='A domotic butler bot'
 arch=('i686' 'x86_64')
