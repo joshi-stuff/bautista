@@ -1,0 +1,28 @@
+[bautista]
+poll_seconds = 60
+
+[device.Calentador]
+control = true
+rule = "heater"
+pivot_hour = 7
+hours = 3
+
+[device.Lavavajillas]
+control = false
+rule = "cheap"
+consecutive = true
+hours = 3
+
+[esios]
+token = ""
+
+[meross]
+user = ""
+password = ""
+devices = [ "Calentador", "Lavavajillas", "Pruebas" ]
+bridge_path = "/usr/bin/meross-bridge"
+
+[telegram]
+admin_user = 0
+allowed_users = [ 1 ] 
+token = ""
