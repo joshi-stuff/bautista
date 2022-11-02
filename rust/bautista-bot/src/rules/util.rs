@@ -1,4 +1,4 @@
-use crate::prices::Prices;
+use crate::prices::*;
 use std::ops::Range;
 
 pub fn get_cheapest_hours(
@@ -20,13 +20,13 @@ pub fn get_cheapest_hours(
             }
         } else {
             let mut cheapest_hour: u32 = 0;
-            let mut cheapest_sum = u32::MAX;
+            let mut cheapest_sum = f32::MAX;
 
             for hour in range.start..range.end - hours {
-                let mut sum: u32 = 0;
+                let mut sum = 0.;
 
                 for i in 0..hours {
-                    sum += prices[(hour + i) as usize] as u32;
+                    sum += prices[(hour + i) as usize].euros_per_kwh;
                 }
 
                 if sum < cheapest_sum {
@@ -40,17 +40,17 @@ pub fn get_cheapest_hours(
             }
         }
     } else {
-        let mut prices_hour: Vec<(u32, u32)> = Vec::new();
+        let mut prices_hour: Vec<(&Price, u32)> = Vec::new();
 
         for hour in 0..prices.len() {
-            let price = prices[hour];
+            let price = &prices[hour];
 
-            prices_hour.push((price as u32, hour as u32));
+            prices_hour.push((price, hour as u32));
         }
 
-        prices_hour.sort_by(|l, r| l.0.cmp(&r.0));
+        prices_hour.sort_by(|l, r| l.0.euros_per_kwh.partial_cmp(&r.0.euros_per_kwh).unwrap());
 
-        let prices_hour: Vec<&(u32, u32)> = prices_hour
+        let prices_hour: Vec<&(&Price, u32)> = prices_hour
             .iter()
             .filter(|ph| range.contains(&ph.1))
             .collect();
