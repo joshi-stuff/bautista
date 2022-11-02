@@ -91,7 +91,20 @@ fn main() {
             Ok(msgs) => {
                 // Process Telegram messages
                 for msg in msgs {
-                    // TODO: filter by allowed_users
+                    if !config.telegram.allowed_users.contains(&msg.user_id)
+                        && msg.user_id != config.telegram.admin_user
+                    {
+                        bot.send_to_admin(&format!(
+                            "\
+He recibido un mensaje de un usuario desconocido:
+
+{}
+
+  - {} [{}]
+",
+                            &msg.text, &msg.user_name, &msg.user_id
+                        ));
+                    }
 
                     eprintln!(
                         "[telegram] {} ({}): {}",
