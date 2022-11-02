@@ -61,7 +61,7 @@ impl Config {
                 bridge_path: toml
                     .meross
                     .bridge_path
-                    .unwrap_or(String::from("/usr/bin/meross-bridge")),
+                    .unwrap_or(String::from("/usr/lib/bautista/meross-bridge-launcher")),
                 devices: toml.meross.devices,
                 password: toml.meross.password,
                 user: toml.meross.user,

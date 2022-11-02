@@ -20,7 +20,6 @@ token = ""
 user = ""
 password = ""
 devices = [ "Calentador", "Lavavajillas", "Pruebas" ]
-bridge_path = "/usr/bin/meross-bridge"
 
 [telegram]
 admin_user = 0
