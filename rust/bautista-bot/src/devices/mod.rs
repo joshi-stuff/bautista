@@ -15,6 +15,7 @@ pub struct Devices<'a> {
     bridge: MerossBridge,
     cfg: &'a Config,
     map: HashMap<String, Option<bool>>,
+    // TODO: only send one uncontrollable device notification per hour
 }
 
 impl<'a> Devices<'a> {
