@@ -1,5 +1,6 @@
 use bautista_bot::*;
-use chrono::Local;
+use chrono::{Local, Timelike};
+use std::collections::HashMap;
 use std::thread::sleep;
 use std::time::{Duration, SystemTime};
 
@@ -11,6 +12,7 @@ fn main() {
     // Devices and rules
     let mut rules = Rules::new(&config);
     let mut devices = Devices::new(&config);
+    let mut last_notification = HashMap::<String, u32>::new();
 
     // Telegram bot
     let mut bot = Bot::new(&config, &mut status);
@@ -56,16 +58,26 @@ fn main() {
         for (device, result) in result.iter() {
             match result {
                 Err(err) => {
-                    bot.broadcast(&format!(
-                        "No he podido controlar el dispositivo {}:\n{:?}",
-                        device, err
-                    ));
+                    if let Some(hour) = last_notification.get(device) {
+                        let current_hour = Local::now().hour();
+
+                        if *hour != current_hour {
+                            bot.broadcast(&format!(
+                                "No he podido controlar el dispositivo {}:\n{:?}",
+                                device, err
+                            ));
+
+                            last_notification.insert(device.clone(), current_hour);
+                        }
+                    }
                 }
 
                 Ok(on) => {
                     let action = if *on { "encendido" } else { "apagado" };
 
                     bot.broadcast(&format!("He {} el dispositivo {}", action, device));
+
+                    last_notification.remove(device);
                 }
             }
         }

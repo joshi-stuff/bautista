@@ -15,6 +15,7 @@ pub trait Rule {
     fn get_on_hours(&self, prices: &Prices, hours: Range<u32>) -> OnHours;
 }
 
+#[derive(Clone)]
 pub struct OnHours {
     on_hours: Vec<bool>,
 }
@@ -47,15 +48,35 @@ impl Rules {
 
         for device in &cfg.meross.devices {
             if let Some(rule) = cfg.get_rule(device) {
-                device_rules.insert(device.clone(), as_boxed_rule(rule));
+                let rule: Box<dyn Rule> = match rule.rule_type().as_str() {
+                    "cheap" => {
+                        let consecutive = rule.get_bool("consecutive");
+                        let hours = rule.get_u32("hours");
+
+                        Box::new(RuleCheap::new(consecutive, hours))
+                    }
+
+                    "heater" => {
+                        let pivot_hour = rule.get_u32("pivot_hour");
+                        let hours = rule.get_u32("hours");
+
+                        Box::new(RuleHeater::new(pivot_hour, hours))
+                    }
+
+                    _ => {
+                        panic!("Invalid rule type for device {}", device);
+                    }
+                };
+
+                device_rules.insert(device.clone(), rule);
             }
         }
 
-        let rules = Rules {
+        Rules {
             device_rules,
             get_on_hours_0_24: None,
             prices: Prices::new(&cfg),
-        };
+        }
     }
 
     /**
@@ -86,8 +107,8 @@ impl Rules {
     pub fn get_on_hours(&self, hours: Range<u32>) -> HashMap<String, OnHours> {
         // Lookup cached value
         if hours.start == 0 && hours.end == 24 {
-            if let Some(get_on_hours) = self.get_on_hours_0_24 {
-                return get_on_hours;
+            if let Some(get_on_hours) = &self.get_on_hours_0_24 {
+                return get_on_hours.clone();
             }
         }
 
@@ -125,12 +146,5 @@ impl Rules {
         let devices: Vec<String> = devices.iter().map(|key| String::from(*key)).collect();
 
         devices
-    }
-}
-
-pub fn as_boxed_rule(rule: config::Rule) -> Box<dyn Rule> {
-    match rule {
-        config::Rule::Heater(rule) => Box::new(rule),
-        config::Rule::Cheap(rule) => Box::new(rule),
     }
 }

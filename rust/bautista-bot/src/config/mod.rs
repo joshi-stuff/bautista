@@ -1,4 +1,4 @@
-use crate::rules::*;
+use std::collections::HashMap;
 use std::fs;
 use toml::Value;
 
@@ -8,6 +8,7 @@ pub struct Config {
     pub bautista: Bautista,
     pub esios: Esios,
     pub meross: Meross,
+    pub rules: HashMap<String, Rule>,
     pub telegram: Telegram,
     pub toml: Value,
 }
@@ -27,9 +28,59 @@ pub struct Meross {
     pub user: String,
 }
 
-pub enum Rule {
-    Cheap(RuleCheap),
-    Heater(RuleHeater),
+pub struct Rule {
+    device: String,
+    toml: Value,
+}
+
+impl Rule {
+    pub fn rule_type(&self) -> String {
+        self.get_string("rule")
+    }
+
+    pub fn get_bool(&self, key: &str) -> bool {
+        self.toml
+            .get(key)
+            .expect(&format!(
+                "Parameter {} not found in device {}",
+                key, &self.device
+            ))
+            .as_bool()
+            .expect(&format!(
+                "Parameter {} for device {} must be a boolean",
+                key, &self.device
+            ))
+    }
+
+    pub fn get_string(&self, key: &str) -> String {
+        String::from(
+            self.toml
+                .get(key)
+                .expect(&format!(
+                    "Parameter {} not found in device {}",
+                    key, &self.device
+                ))
+                .as_str()
+                .expect(&format!(
+                    "Parameter {} for device {} must be a string",
+                    key, &self.device
+                )),
+        )
+    }
+
+    pub fn get_u32(&self, key: &str) -> u32 {
+        self.toml
+            .get(key)
+            .expect(&format!(
+                "Parameter {} not found in device {}",
+                key, &self.device
+            ))
+            .as_integer()
+            .expect(&format!(
+                "Parameter {} for device {} must be an unsigned 32-bit integer",
+                key, &self.device
+            )) as u32
+    }
 }
 
 pub struct Telegram {
@@ -38,7 +89,7 @@ pub struct Telegram {
     pub token: String,
 }
 
-impl Config {
+impl<'a> Config {
     pub fn new() -> Config {
         let toml = fs::read_to_string("/etc/bautista/config.toml")
             .expect("Failed to load /etc/bautista/config.toml");
@@ -49,6 +100,22 @@ impl Config {
 
         let toml: types::Toml =
             toml::from_str(&toml).expect("failed to parse /etc/bautista/config.toml");
+
+        let mut rules = HashMap::new();
+
+        for device in &toml.meross.devices {
+            if let Some(cfg) = value.get("device") {
+                if let Some(cfg) = cfg.get(device) {
+                    rules.insert(
+                        device.clone(),
+                        Rule {
+                            device: device.to_string(),
+                            toml: cfg.clone(),
+                        },
+                    );
+                }
+            }
+        }
 
         Config {
             bautista: Bautista {
@@ -66,6 +133,7 @@ impl Config {
                 password: toml.meross.password,
                 user: toml.meross.user,
             },
+            rules,
             telegram: Telegram {
                 admin_user: toml.telegram.admin_user,
                 allowed_users: toml.telegram.allowed_users,
@@ -75,96 +143,15 @@ impl Config {
         }
     }
 
-    // TODO: move this method to DeviceRules so that Config is plain data
-    pub fn get_rule(&self, device: &str) -> Option<Rule> {
-        let cfg = self.toml.get("device");
-
-        if let None = cfg {
-            return None;
-        }
-
-        let cfg = cfg.unwrap();
-
-        let cfg = cfg.get(device);
-
-        if let None = cfg {
-            return None;
-        }
-
-        let cfg = cfg.unwrap();
-
-        let rule_type = get_string(&cfg, "rule", device);
-
-        match rule_type.as_str() {
-            "cheap" => {
-                let consecutive = get_bool(&cfg, "consecutive", device);
-                let hours = get_u32(&cfg, "hours", device);
-
-                Some(Rule::Cheap(RuleCheap::new(consecutive, hours)))
-            }
-
-            "heater" => {
-                let pivot_hour = get_u32(&cfg, "pivot_hour", device);
-                let hours = get_u32(&cfg, "hours", device);
-
-                Some(Rule::Heater(RuleHeater::new(pivot_hour, hours)))
-            }
-
-            _ => {
-                panic!("Invalid rule type {} for device {}", &rule_type, device);
-            }
-        }
+    pub fn get_rule(&self, device: &str) -> Option<&Rule> {
+        self.rules.get(device)
     }
 
-    pub fn is_controlled(&self, device: &str) -> Option<bool> {
-        let cfg = self.toml.get("device");
-
-        if let None = cfg {
-            return None;
+    pub fn is_controlled(&self, device: &str) -> bool {
+        if let Some(rule) = self.rules.get(device) {
+            rule.get_bool("control")
+        } else {
+            false
         }
-
-        let cfg = cfg.unwrap();
-
-        let cfg = cfg.get(device);
-
-        if let None = cfg {
-            return None;
-        }
-
-        let cfg = cfg.unwrap();
-
-        Some(get_bool(&cfg, "control", device))
     }
-}
-
-fn get_bool(cfg: &Value, key: &str, device: &str) -> bool {
-    cfg.get(key)
-        .expect(&format!("Parameter {} not found in device {}", key, device))
-        .as_bool()
-        .expect(&format!(
-            "Parameter {} for device {} must be a boolean",
-            key, device
-        ))
-}
-
-fn get_string(cfg: &Value, key: &str, device: &str) -> String {
-    String::from(
-        cfg.get(key)
-            .expect(&format!("Parameter {} not found in device {}", key, device))
-            .as_str()
-            .expect(&format!(
-                "Parameter {} for device {} must be a string",
-                key, device
-            )),
-    )
-}
-
-fn get_u32(cfg: &Value, key: &str, device: &str) -> u32 {
-    cfg.get(key)
-        .expect(&format!("Parameter {} not found in device {}", key, device))
-        .as_integer()
-        .expect(&format!(
-            "Parameter {} for device {} must be an unsigned 32-bit integer",
-            key, device
-        )) as u32
 }
