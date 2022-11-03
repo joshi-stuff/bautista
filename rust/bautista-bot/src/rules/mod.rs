@@ -37,6 +37,7 @@ impl OnHours {
 
 pub struct Rules {
     device_rules: HashMap<String, Box<dyn Rule>>,
+    get_on_hours_0_24: Option<HashMap<String, OnHours>>,
     prices: Prices,
 }
 
@@ -50,10 +51,11 @@ impl Rules {
             }
         }
 
-        Rules {
+        let rules = Rules {
             device_rules,
+            get_on_hours_0_24: None,
             prices: Prices::new(&cfg),
-        }
+        };
     }
 
     /**
@@ -68,7 +70,6 @@ impl Rules {
     pub fn eval(&self, now: &DateTime<Local>) -> HashMap<String, Option<bool>> {
         let mut result: HashMap<String, Option<bool>> = HashMap::new();
 
-        // TODO: get results from cache
         let on_hours = self.get_on_hours(0..24);
 
         for (device, on_hours) in on_hours {
@@ -83,6 +84,14 @@ impl Rules {
      * turned on.
      */
     pub fn get_on_hours(&self, hours: Range<u32>) -> HashMap<String, OnHours> {
+        // Lookup cached value
+        if hours.start == 0 && hours.end == 24 {
+            if let Some(get_on_hours) = self.get_on_hours_0_24 {
+                return get_on_hours;
+            }
+        }
+
+        // If not cached, calculate it
         let mut result: HashMap<String, OnHours> = HashMap::new();
 
         for device in self.devices() {
@@ -101,9 +110,13 @@ impl Rules {
     }
 
     pub fn update_prices(&mut self) -> Result<bool> {
-        self.prices.update()
+        let updated = self.prices.update()?;
 
-        // TODO: cache rules get_on_hours(0..24) for eval
+        if updated {
+            self.get_on_hours_0_24 = Some(self.get_on_hours(0..24));
+        }
+
+        Ok(updated)
     }
 
     fn devices(&self) -> Vec<String> {
