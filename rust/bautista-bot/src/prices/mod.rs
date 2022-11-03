@@ -11,7 +11,6 @@ mod pdll;
 pub struct Prices {
     client: Client,
     last_update: Date<Local>,
-    // TODO: make prices u64
     today_prices: Vec<Price>,
     token: String,
     tomorrow_prices: Option<Vec<Price>>,
@@ -182,8 +181,8 @@ impl Prices {
 
             Ok(true)
         } else {
+            // TODO: implement e·sios
             todo!("Implement e·sios");
-
             /*
             let response = self
                 .client
@@ -203,7 +202,6 @@ impl Prices {
                 return Err(Box::new(EsiosError::CallFailed(status.to_string())));
             }
 
-            // TODO: read reply
             */
         }
     }

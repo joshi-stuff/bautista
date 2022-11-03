@@ -117,7 +117,6 @@ async function announce(eventName, ...things) {
 	process.stdout.write(' ', 'utf-8');
 	process.stdout.write(things.join('|'), 'utf-8');
 	process.stdout.write('\n', 'utf-8');
-	// TODO: console.error announcements
 }
 
 async function reply(ok, ...things) {
@@ -125,7 +124,6 @@ async function reply(ok, ...things) {
 	process.stdout.write(ok ? 'OK ' : 'ERROR ', 'utf-8');
 	process.stdout.write(things.join('|'), 'utf-8');
 	process.stdout.write('\n', 'utf-8');
-	// TODO: console.error replies
 }
 
 async function runCommand(commandName, command, devices, callback) {
