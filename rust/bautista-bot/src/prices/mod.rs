@@ -4,6 +4,7 @@ use chrono::prelude::*;
 use reqwest::blocking::Client;
 use std::fmt::{self, Display, Formatter};
 use std::result;
+use tranch_calculator::TranchCalculator;
 
 //mod esios;
 mod pdll;
@@ -21,62 +22,6 @@ pub enum Tranch {
     High,
     Med,
     Low,
-}
-
-impl Tranch {
-    fn get_icon(&self) -> &str {
-        match self {
-            Tranch::High => "🔴",
-            Tranch::Med => "🟡",
-            Tranch::Low => "🟢",
-        }
-    }
-}
-
-struct TranchCalculator {
-    p0: f32,
-    p25: f32,
-    p75: f32,
-    p100: f32,
-}
-
-impl TranchCalculator {
-    fn new(prices: &Vec<f32>) -> TranchCalculator {
-        let p0 = prices
-            .iter()
-            .min_by(|l, r| l.partial_cmp(&r).unwrap())
-            .unwrap();
-
-        let p100 = prices
-            .iter()
-            .max_by(|l, r| l.partial_cmp(&r).unwrap())
-            .unwrap();
-
-        let p25 = p0 + ((p100 - p0) / 4.);
-
-        let p75 = p100 - (p25 - p0);
-
-        TranchCalculator {
-            p0: *p0,
-            p25,
-            p75,
-            p100: *p100,
-        }
-    }
-
-    fn get_tranch(&self, price: f32) -> Tranch {
-        if price < self.p0 {
-            panic!("Price too low: {}", &price);
-        } else if price < self.p25 {
-            Tranch::Low
-        } else if price < self.p75 {
-            Tranch::Med
-        } else if price <= self.p100 {
-            Tranch::High
-        } else {
-            panic!("Price too high: {}", &price);
-        }
-    }
 }
 
 #[derive(Clone)]
@@ -228,6 +173,16 @@ impl Display for Prices {
         }
 
         Ok(())
+    }
+}
+
+impl Tranch {
+    fn get_icon(&self) -> &str {
+        match self {
+            Tranch::High => "🔴",
+            Tranch::Med => "🟡",
+            Tranch::Low => "🟢",
+        }
     }
 }
 
