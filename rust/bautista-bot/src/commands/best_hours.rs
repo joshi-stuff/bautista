@@ -3,6 +3,10 @@ use crate::telegram::Message;
 use crate::util::format_on_hours::*;
 use chrono::prelude::*;
 use std::cmp::min;
+use thiserror::Error;
+
+#[derive(Debug, Error)]
+pub enum Error {}
 
 pub struct BestHoursCommand {}
 
@@ -13,7 +17,7 @@ impl BestHoursCommand {
 }
 
 impl Command for BestHoursCommand {
-    fn run(&self, msg: &Message, rules: &Rules) -> Result<Option<String>> {
+    fn run(&self, msg: &Message, rules: &Rules) -> Result<Option<String>, super::Error> {
         let text = &msg.text;
 
         if !text.starts_with("/horario") {

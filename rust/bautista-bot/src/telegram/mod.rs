@@ -8,9 +8,13 @@ use urlencoding::encode;
 mod api;
 
 #[derive(Debug, Error)]
-pub enum TelegramError {
-    #[error("Telegram API call failed")]
-    CallFailed,
+pub enum Error {
+    #[error("Telegram remote API call failed")]
+    CallFailed(#[from] reqwest::Error),
+    #[error("Telegram API request returned an error")]
+    APICallReturnedError,
+    #[error("Cannot update persistent status")]
+    UpdateStatusFailed(#[from] status::Error),
 }
 
 pub struct Bot<'a> {
@@ -47,7 +51,7 @@ impl<'a> Bot<'a> {
         }
     }
 
-    pub fn get_new_messages(&mut self, timeout_seconds: u32) -> Result<Vec<Message>> {
+    pub fn get_new_messages(&mut self, timeout_seconds: u32) -> Result<Vec<Message>, Error> {
         let reply: api::Reply<Vec<api::Update>> = match self.get(
             "getUpdates",
             HashMap::from([
@@ -63,14 +67,14 @@ impl<'a> Bot<'a> {
                 if err.is_timeout() {
                     api::Reply::empty()
                 } else {
-                    return Err(Box::new(err));
+                    return Err(Error::from(err));
                 }
             }
             Ok(reply) => reply,
         };
 
         if !reply.ok {
-            return Err(Box::new(TelegramError::CallFailed));
+            return Err(Error::APICallReturnedError);
         }
 
         let mut msgs: Vec<Message> = Vec::new();

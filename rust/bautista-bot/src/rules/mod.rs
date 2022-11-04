@@ -3,6 +3,7 @@ use crate::*;
 use chrono::{DateTime, Local, Timelike};
 use std::collections::HashMap;
 use std::ops::Range;
+use thiserror::Error;
 
 mod cheap;
 mod heater;
@@ -10,6 +11,12 @@ mod util;
 
 pub use cheap::RuleCheap;
 pub use heater::RuleHeater;
+
+#[derive(Debug, Error)]
+pub enum Error {
+    #[error("Cannot update prices")]
+    UpdatePricesFailed(#[from] prices::Error),
+}
 
 pub trait Rule {
     fn get_on_hours(&self, prices: &Prices, hours: Range<u32>) -> OnHours;
@@ -130,7 +137,7 @@ impl Rules {
         &self.prices
     }
 
-    pub fn update_prices(&mut self) -> Result<bool> {
+    pub fn update_prices(&mut self) -> Result<bool, Error> {
         let updated = self.prices.update()?;
 
         if updated {

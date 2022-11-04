@@ -1,14 +1,16 @@
-use self::meross::MerossBridge;
 use crate::*;
+use meross::MerossBridge;
 use std::collections::HashMap;
 use thiserror::Error;
 
 mod meross;
 
 #[derive(Error, Debug)]
-pub enum DevicesError {
-    #[error("Meross bridge returned error: {0}")]
-    BridgeError(String),
+pub enum Error {
+    #[error("Meross bridge call failed")]
+    BridgeCallFailed(#[from] meross::Error),
+    #[error("Meross bridge call returned error: {0}")]
+    BridgeCallReturnedError(String),
 }
 
 pub struct Devices<'a> {
@@ -36,8 +38,8 @@ impl<'a> Devices<'a> {
      * Returns a HashMap containing the devices that have changed and the
      * result.
      */
-    pub fn commit(&mut self) -> HashMap<String, Result<bool>> {
-        let mut result: HashMap<String, Result<bool>> = HashMap::new();
+    pub fn commit(&mut self) -> HashMap<String, Result<bool, Error>> {
+        let mut result: HashMap<String, Result<bool, Error>> = HashMap::new();
 
         let map = self.map.clone();
 
@@ -91,21 +93,15 @@ impl<'a> Devices<'a> {
         }
     }
 
-    fn send(&mut self, cmd: &str, msg: &str) -> Result<String> {
+    fn send(&mut self, cmd: &str, msg: &str) -> Result<String, Error> {
         self.bridge.send_text(&format!("{} {}", cmd, msg))?;
 
-        match self.bridge.get_reply() {
-            Err(err) => Err(err),
+        let reply = self.bridge.get_reply()?;
 
-            Ok(reply) => {
-                if reply.starts_with("> OK ") {
-                    Ok(String::from(&reply[5..]))
-                } else {
-                    Err(Box::new(DevicesError::BridgeError(String::from(
-                        &reply[8..],
-                    ))))
-                }
-            }
+        if reply.starts_with("> OK ") {
+            Ok(String::from(&reply[5..]))
+        } else {
+            Err(Error::BridgeCallReturnedError(String::from(&reply[8..])))
         }
     }
 }

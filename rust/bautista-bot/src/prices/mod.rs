@@ -3,18 +3,17 @@ use crate::*;
 use chrono::prelude::*;
 use reqwest::blocking::Client;
 use std::fmt::{self, Display, Formatter};
-use std::result;
+use thiserror::Error;
 use tranch_calculator::TranchCalculator;
 
 //mod esios;
 mod pdll;
+mod tranch_calculator;
 
-pub struct Prices {
-    client: Client,
-    last_update: Date<Local>,
-    today_prices: Vec<Price>,
-    token: String,
-    tomorrow_prices: Option<Vec<Price>>,
+#[derive(Debug, Error)]
+pub enum Error {
+    #[error("Remote API call failed")]
+    CallFailed(#[from] reqwest::Error),
 }
 
 #[derive(Clone)]
@@ -30,6 +29,14 @@ pub struct Price {
     pub tranch: Tranch,
 }
 
+pub struct Prices {
+    client: Client,
+    last_update: Date<Local>,
+    today_prices: Vec<Price>,
+    token: String,
+    tomorrow_prices: Option<Vec<Price>>,
+}
+
 impl Price {
     fn new(euros_per_kwh: f32, tranch: Tranch) -> Price {
         Price {
@@ -40,7 +47,7 @@ impl Price {
 }
 
 impl Display for Price {
-    fn fmt(&self, fmt: &mut Formatter<'_>) -> result::Result<(), fmt::Error> {
+    fn fmt(&self, fmt: &mut Formatter<'_>) -> Result<(), fmt::Error> {
         fmt.write_str(&format!(
             "{} {}",
             self.tranch.get_icon(),
@@ -68,7 +75,7 @@ impl Prices {
         self.tomorrow_prices.clone()
     }
 
-    pub fn update(&mut self) -> Result<bool> {
+    pub fn update(&mut self) -> Result<bool, Error> {
         if self.token == "" {
             let today = Local::now();
             let now = today.time();
@@ -153,7 +160,7 @@ impl Prices {
 }
 
 impl Display for Prices {
-    fn fmt(&self, fmt: &mut Formatter<'_>) -> result::Result<(), fmt::Error> {
+    fn fmt(&self, fmt: &mut Formatter<'_>) -> Result<(), fmt::Error> {
         fmt.write_str("· Hoy:\n")?;
 
         for i in 0..24 {

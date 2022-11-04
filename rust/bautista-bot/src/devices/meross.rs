@@ -1,10 +1,20 @@
 use crate::*;
+use std::io;
 use std::io::{BufRead, BufReader, Lines, Write};
 use std::process::{ChildStdin, ChildStdout, Command, Stdio};
 use std::thread;
 use std::time::Duration;
+use thiserror::Error;
 
 const THREE_SECONDS: Duration = Duration::from_secs(3);
+
+#[derive(Debug, Error)]
+pub enum Error {
+    #[error("Spawn failed for meross-bridge")]
+    SpawnFailed(#[source] Option<io::Error>),
+    #[error("I/O failed while communicating with meross-bridge")]
+    IOFailed(#[source] Option<io::Error>),
+}
 
 pub struct MerossBridge {
     stdin: ChildStdin,
@@ -12,27 +22,20 @@ pub struct MerossBridge {
 }
 
 impl MerossBridge {
-    pub fn new(config: &Config) -> Result<MerossBridge> {
-        let mut bridge = Command::new(&config.meross.bridge_path)
+    pub fn new(config: &Config) -> Result<MerossBridge, Error> {
+        let bridge = Command::new(&config.meross.bridge_path)
             .env("MEROSS_USER", &config.meross.user)
             .env("MEROSS_PASSWORD", &config.meross.password)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .spawn()
-            .expect("error launching meross-bridge");
+            .or_else(|err| Err(Error::SpawnFailed(Some(err))))?;
 
-        let stdin = bridge
-            .stdin
-            .take()
-            .expect("failed to open meross-bridge stdin");
+        let stdin = bridge.stdin.ok_or(Error::SpawnFailed(None))?;
 
-        let stdout = BufReader::new(
-            bridge
-                .stdout
-                .take()
-                .expect("failed to open meross-bridge stdout"),
-        )
-        .lines();
+        let stdout = bridge.stdout.ok_or(Error::SpawnFailed(None))?;
+
+        let stdout = BufReader::new(stdout).lines();
 
         // Wait for bridge to settle
         thread::sleep(THREE_SECONDS);
@@ -40,9 +43,11 @@ impl MerossBridge {
         Ok(MerossBridge { stdin, stdout })
     }
 
-    pub fn get_reply(&mut self) -> Result<String> {
+    pub fn get_reply(&mut self) -> Result<String, Error> {
         loop {
-            let line = self.stdout.next().unwrap()?;
+            let line = self.stdout.next().ok_or(Error::IOFailed(None))?;
+
+            let line = line.or_else(|err| Err(Error::IOFailed(Some(err))))?;
 
             //dbg!(&line);
 
@@ -52,8 +57,10 @@ impl MerossBridge {
         }
     }
 
-    pub fn send_text(&mut self, text: &str) -> Result<()> {
-        self.stdin.write_all(format!("{}\n", &text).as_bytes())?;
+    pub fn send_text(&mut self, text: &str) -> Result<(), Error> {
+        self.stdin
+            .write_all(format!("{}\n", &text).as_bytes())
+            .or_else(|err| Err(Error::IOFailed(Some(err))))?;
 
         Ok(())
     }

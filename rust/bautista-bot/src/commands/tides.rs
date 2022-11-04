@@ -2,6 +2,41 @@ use super::*;
 use crate::telegram::Message;
 use reqwest::blocking::Client;
 use serde::Deserialize;
+use thiserror::Error;
+
+#[derive(Debug, Error)]
+pub enum Error {
+    #[error("IHM remote API call failed")]
+    CallFailed(#[from] reqwest::Error),
+}
+
+#[allow(dead_code)]
+#[derive(Debug, Deserialize)]
+struct Dato {
+    altura: String,
+    hora: String,
+    tipo: String,
+}
+
+#[allow(dead_code)]
+#[derive(Debug, Deserialize)]
+struct Datos {
+    marea: Vec<Dato>,
+}
+
+#[allow(dead_code)]
+#[derive(Debug, Deserialize)]
+struct Mareas {
+    pub datos: Datos,
+    pub fecha: String,
+    pub puerto: String,
+}
+
+#[allow(dead_code)]
+#[derive(Debug, Deserialize)]
+struct Reply {
+    pub mareas: Mareas,
+}
 
 pub struct TidesCommand {
     client: Client,
@@ -15,36 +50,8 @@ impl TidesCommand {
     }
 }
 
-#[allow(dead_code)]
-#[derive(Debug, Deserialize)]
-struct Reply {
-    pub mareas: Mareas,
-}
-
-#[allow(dead_code)]
-#[derive(Debug, Deserialize)]
-struct Mareas {
-    pub datos: Datos,
-    pub fecha: String,
-    pub puerto: String,
-}
-
-#[allow(dead_code)]
-#[derive(Debug, Deserialize)]
-struct Datos {
-    marea: Vec<Dato>,
-}
-
-#[allow(dead_code)]
-#[derive(Debug, Deserialize)]
-struct Dato {
-    altura: String,
-    hora: String,
-    tipo: String,
-}
-
 impl Command for TidesCommand {
-    fn run(&self, msg: &Message, _rules: &Rules) -> Result<Option<String>> {
+    fn run(&self, msg: &Message, _rules: &Rules) -> Result<Option<String>, super::Error> {
         let text = &msg.text;
 
         if !text.starts_with("/mareas") {

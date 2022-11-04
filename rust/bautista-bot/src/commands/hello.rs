@@ -1,5 +1,9 @@
 use super::*;
 use crate::telegram::Message;
+use thiserror::Error;
+
+#[derive(Debug, Error)]
+pub enum Error {}
 
 pub struct HelloCommand {}
 
@@ -10,7 +14,7 @@ impl HelloCommand {
 }
 
 impl Command for HelloCommand {
-    fn run(&self, msg: &Message, _rules: &Rules) -> Result<Option<String>> {
+    fn run(&self, msg: &Message, _rules: &Rules) -> Result<Option<String>, super::Error> {
         let text = &msg.text;
 
         if !text.starts_with("/hola") {

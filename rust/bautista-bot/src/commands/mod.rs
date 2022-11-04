@@ -1,6 +1,7 @@
 use crate::rules::Rules;
 use crate::telegram::Message;
 use crate::*;
+use std::error;
 
 mod best_hours;
 mod hello;
@@ -10,12 +11,14 @@ use best_hours::BestHoursCommand;
 use hello::HelloCommand;
 use tides::TidesCommand;
 
+type Error = Box<dyn error::Error>;
+
 pub trait Command {
     /**
      * Return None if command does not apply or a String to return to the user
      * instead
      */
-    fn run(&self, msg: &Message, rules: &Rules) -> Result<Option<String>>;
+    fn run(&self, msg: &Message, rules: &Rules) -> Result<Option<String>, Error>;
 }
 
 pub struct Commands {
