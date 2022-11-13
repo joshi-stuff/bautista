@@ -141,6 +141,7 @@ impl Rules {
         let updated = self.prices.update()?;
 
         if updated {
+            self.get_on_hours_0_24 = None;
             self.get_on_hours_0_24 = Some(self.get_on_hours(0..24));
         }
 
